@@ -113,4 +113,14 @@ class Dados {
                     ["Angular", "JavaScript"]
             )
     ]
+
+    // Cadastro de novo candidato
+    static void adicionarCandidato(Candidato candidato) {
+        candidatos.add(candidato)
+    }
+
+    // Cadastro de nova empresa
+    static void adicionarEmpresa(Empresa empresa) {
+        empresas.add(empresa)
+    }
 }
