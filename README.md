@@ -12,6 +12,15 @@ A proposta do projeto é criar uma aplicação inspirada no funcionamento de pla
 
 Nesta versão, o sistema possui candidatos e empresas pré-cadastrados e permite visualizar essas informações através de um menu no terminal.
 
+## Tecnologias 
+
+### Frontend
+- TypeScript: tipagem e organização do código.
+- Vite: servidor de desenvolvimento e build.
+- HTML5: estrutura da página.
+- CSS3: estilos e responsividade.
+- Chart.js: gráfico de barras de competências.
+- LocalStorage: persistência local dos dados de demonstração.
 
 ## Funcionalidades
 
