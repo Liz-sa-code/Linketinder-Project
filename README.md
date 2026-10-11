@@ -22,6 +22,10 @@ Nesta versão, o sistema possui candidatos e empresas pré-cadastrados e permite
 - Chart.js: gráfico de barras de competências.
 - LocalStorage: persistência local dos dados de demonstração.
 
+## Banco de daods
+- PostgreSQL 18: Sistema gerenciador de banco de dados relacional (SGBD).
+- SQL: Linguagem utilizada para criação das tabelas, inserção, consulta e manipulação de dados.
+- dbdiagram.io: Ferramenta utilizada para elaboração do Diagrama Entidade-Relacionamento (DER).
 ## Funcionalidades
 
 O sistema possui:
