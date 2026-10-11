@@ -1,5 +1,7 @@
+
 plugins {
     id 'groovy'
+    id 'application'
 }
 
 group = 'Linketinder'
@@ -12,6 +14,8 @@ repositories {
 dependencies {
     implementation localGroovy()
 
+    implementation 'org.postgresql:postgresql:42.7.7'
+
     testImplementation platform('org.spockframework:spock-bom:2.4-groovy-4.0')
     testImplementation 'org.spockframework:spock-core'
 
@@ -20,4 +24,12 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+application {
+    mainClass = 'Main'
+}
+
+tasks.named('run', JavaExec) {
+    standardInput = System.in
 }
