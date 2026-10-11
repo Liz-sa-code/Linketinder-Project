@@ -12,33 +12,53 @@ A proposta do projeto é criar uma aplicação inspirada no funcionamento de pla
 
 Nesta versão, o sistema possui candidatos e empresas pré-cadastrados e permite visualizar essas informações através de um menu no terminal.
 
-## Tecnologias 
+## Tecnologias utilizadas
 
-### Frontend
-- TypeScript: tipagem e organização do código.
-- Vite: servidor de desenvolvimento e build.
-- HTML5: estrutura da página.
-- CSS3: estilos e responsividade.
-- Chart.js: gráfico de barras de competências.
-- LocalStorage: persistência local dos dados de demonstração.
+- Groovy: desenvolvimento do backend.
+- PostgreSQL: armazenamento e gerenciamento dos dados.
+- JDBC: comunicação entre a aplicação e o banco de dados.
+- Gradle: gerenciamento do projeto e execução dos testes.
+- Spock: estrutura de testes automatizados, quando configurada no projeto.
+- TypeScript: desenvolvimento do frontend.
+- Vite: ferramenta de desenvolvimento e execução do frontend.
+- Git e GitHub: versionamento e hospedagem do código-fonte.
 
-## Banco de daods
-- PostgreSQL 18: Sistema gerenciador de banco de dados relacional (SGBD).
-- SQL: Linguagem utilizada para criação das tabelas, inserção, consulta e manipulação de dados.
-- dbdiagram.io: Ferramenta utilizada para elaboração do Diagrama Entidade-Relacionamento (DER).
 ## Funcionalidades
 
-O sistema possui:
+O backend possui operações de cadastro, consulta, atualização e exclusão (CRUD) para as principais entidades do sistema.
 
-- Listagem de candidatos;
-- Listagem de empresas;
-- Exibição dos dados dos candidatos;
-- Exibição dos dados das empresas;
-- Menu de interação no terminal;
-- Candidatos pré-cadastrados;
-- Empresas pré-cadastradas;
-- Utilização de listas para armazenamento dos dados
+-- Candidatos
+- Cadastro de candidatos.
+- Listagem dos candidatos cadastrados.
+- Atualização de informações.
+- Exclusão de candidatos.
+- Associação de competências aos candidatos.
+- Os dados incluem nome, sobrenome, data de nascimento, e-mail, CPF, país, CEP, descrição e senha armazenada no campo destinado ao hash.
 
+-- Empresas
+- Cadastro de empresas.
+- Listagem de empresas.
+- Atualização de informações.
+- Exclusão de empresas.
+- Os dados incluem nome, CNPJ, e-mail, descrição, país, CEP e campo destinado ao hash da senha.
+
+--Competências
+- Cadastro de competências.
+- Listagem das competências disponíveis.
+- Atualização de competências.
+- Exclusão de competências.
+
+-- Vagas
+- Cadastro de vagas vinculadas a empresas.
+- Listagem de vagas.
+- Atualização de informações das vagas.
+- Exclusão de vagas.
+
+-- Associação de competências exigidas.
+- Banco de dados
+- O sistema utiliza PostgreSQL, com acesso realizado diretamente por JDBC, sem utilizar JPA ou Hibernate.
+- O esquema relacional está definido em database/schema.sql, enquanto os dados iniciais estão organizados em database/inserts.sql.
+- O arquivo database/queries.sql reúne consultas SQL utilizadas no projeto.
 ## Rodar no terminal
 
 1. Clonar o repositório
