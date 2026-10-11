@@ -1,8 +1,8 @@
+
 /*
  * Autora: Liz Soares
  * Projeto: Linketinder
  */
-
 
 import java.util.Scanner
 
@@ -16,15 +16,23 @@ class Main {
         while (opcao != 0) {
             println """
 ===== LINKETINDER =====
-1 - Listar candidatos
-2 - Listar empresas
-3 - Cadastrar candidato
-4 - Atualizar candidato
-5 - Excluir candidato
-6 - Cadastrar empresa
-7 - Atualizar empresa
-8 - Excluir empresa
-0 - Sair
+1  - Listar candidatos
+2  - Listar empresas
+3  - Cadastrar candidato
+4  - Atualizar candidato
+5  - Excluir candidato
+6  - Cadastrar empresa
+7  - Atualizar empresa
+8  - Excluir empresa
+9  - Listar vagas
+10 - Cadastrar vaga
+11 - Atualizar vaga
+12 - Excluir vaga
+13 - Listar competências
+14 - Cadastrar competência
+15 - Atualizar competência
+16 - Excluir competência
+0  - Sair
 """
             print "Escolha uma opção: "
 
@@ -66,6 +74,38 @@ class Main {
                         excluirEmpresa(scanner, banco)
                         break
 
+                    case 9:
+                        listarVagas(banco)
+                        break
+
+                    case 10:
+                        cadastrarVaga(scanner, banco)
+                        break
+
+                    case 11:
+                        atualizarVaga(scanner, banco)
+                        break
+
+                    case 12:
+                        excluirVaga(scanner, banco)
+                        break
+
+                    case 13:
+                        listarCompetencias(banco)
+                        break
+
+                    case 14:
+                        cadastrarCompetencia(scanner, banco)
+                        break
+
+                    case 15:
+                        atualizarCompetencia(scanner, banco)
+                        break
+
+                    case 16:
+                        excluirCompetencia(scanner, banco)
+                        break
+
                     case 0:
                         println "Encerrando o Linketinder..."
                         break
@@ -73,8 +113,10 @@ class Main {
                     default:
                         println "Opção inválida!"
                 }
+
             } catch (NumberFormatException e) {
                 println "Digite um número válido."
+
             } catch (Exception e) {
                 println "Erro: ${e.message}"
             }
@@ -88,7 +130,7 @@ class Main {
         scanner.close()
     }
 
-    // LISTAR CANDIDATOS
+    // CANDIDATOS
     static void listarCandidatos(BancoDeDados banco) {
         println "\n===== CANDIDATOS ====="
 
@@ -103,44 +145,17 @@ class Main {
             println """
 ID: ${candidato.id}
 Nome: ${candidato.nome} ${candidato.sobrenome}
+Data de nascimento: ${candidato.data_nascimento}
 E-mail: ${candidato.email}
 CPF: ${candidato.cpf}
 País: ${candidato.pais}
 CEP: ${candidato.cep}
 Descrição: ${candidato.descricao}
-Competências: ${candidato.competencias}
------------------------------
-"""
-
-        }
-    }
-
-    // LISTAR EMPRESAS
-    static void listarEmpresas(BancoDeDados banco) {
-        println "\n===== EMPRESAS ====="
-
-        def empresas = banco.listarEmpresas()
-
-        if (!empresas) {
-            println "Nenhuma empresa cadastrada."
-            return
-        }
-
-        empresas.each { empresa ->
-            println """
-ID: ${empresa.id}
-Nome: ${empresa.nome}
-CNPJ: ${empresa.cnpj}
-E-mail: ${empresa.email}
-País: ${empresa.pais}
-CEP: ${empresa.cep}
-Descrição: ${empresa.descricao}
 -----------------------------
 """
         }
     }
 
-    // CADASTRAR CANDIDATO
     static void cadastrarCandidato(
             Scanner scanner,
             BancoDeDados banco
@@ -169,7 +184,6 @@ Descrição: ${empresa.descricao}
         println "Candidato cadastrado com sucesso!"
     }
 
-    // ATUALIZAR CANDIDATO
     static void atualizarCandidato(
             Scanner scanner,
             BancoDeDados banco
@@ -196,7 +210,9 @@ Descrição: ${empresa.descricao}
         List<String> competencias = lerCompetencias(scanner)
 
         boolean atualizado = banco.atualizarCandidato(
-                id, candidato, competencias
+                id,
+                candidato,
+                competencias
         )
 
         if (atualizado) {
@@ -204,11 +220,8 @@ Descrição: ${empresa.descricao}
         } else {
             println "Nenhum candidato encontrado com o ID ${id}."
         }
-
-        println "Solicitação de atualização concluída."
     }
 
-    // EXCLUIR CANDIDATO
     static void excluirCandidato(
             Scanner scanner,
             BancoDeDados banco
@@ -227,13 +240,38 @@ Descrição: ${empresa.descricao}
 
         if (confirmacao.equalsIgnoreCase("s")) {
             banco.excluirCandidato(id)
-            println "Solicitação de exclusão concluída."
+            println "Solicitação de exclusão enviada."
         } else {
             println "Exclusão cancelada."
         }
     }
 
-    // CADASTRAR EMPRESA
+    // EMPRESAS
+
+    static void listarEmpresas(BancoDeDados banco) {
+        println "\n===== EMPRESAS ====="
+
+        def empresas = banco.listarEmpresas()
+
+        if (!empresas) {
+            println "Nenhuma empresa cadastrada."
+            return
+        }
+
+        empresas.each { empresa ->
+            println """
+ID: ${empresa.id}
+Nome: ${empresa.nome}
+CNPJ: ${empresa.cnpj}
+E-mail: ${empresa.email}
+País: ${empresa.pais}
+CEP: ${empresa.cep}
+Descrição: ${empresa.descricao}
+-----------------------------
+"""
+        }
+    }
+
     static void cadastrarEmpresa(
             Scanner scanner,
             BancoDeDados banco
@@ -255,7 +293,6 @@ Descrição: ${empresa.descricao}
         println "Empresa cadastrada com sucesso!"
     }
 
-    // ATUALIZAR EMPRESA
     static void atualizarEmpresa(
             Scanner scanner,
             BancoDeDados banco
@@ -276,10 +313,9 @@ Descrição: ${empresa.descricao}
 
         banco.atualizarEmpresa(id, empresa)
 
-        println "Solicitação de atualização concluída."
+        println "Solicitação de atualização enviada."
     }
 
-    // EXCLUIR EMPRESA
     static void excluirEmpresa(
             Scanner scanner,
             BancoDeDados banco
@@ -298,11 +334,214 @@ Descrição: ${empresa.descricao}
 
         if (confirmacao.equalsIgnoreCase("s")) {
             banco.excluirEmpresa(id)
-            println "Solicitação de exclusão concluída."
+            println "Solicitação de exclusão enviada."
         } else {
             println "Exclusão cancelada."
         }
     }
+
+    // VAGAS
+
+    static void listarVagas(BancoDeDados banco) {
+        println "\n===== VAGAS ====="
+
+        def vagas = banco.listarVagas()
+
+        if (!vagas) {
+            println "Nenhuma vaga cadastrada."
+            return
+        }
+
+        vagas.each { vaga ->
+            println """
+ID: ${vaga.id}
+Empresa ID: ${vaga.empresa_id}
+Nome: ${vaga.nome}
+Descrição: ${vaga.descricao}
+Cidade: ${vaga.cidade}
+Estado: ${vaga.estado}
+Ativa: ${vaga.ativa}
+Competências: ${vaga.competencias}
+-----------------------------
+"""
+        }
+    }
+
+    static void cadastrarVaga(
+            Scanner scanner,
+            BancoDeDados banco
+    ) {
+        println "\n===== CADASTRAR VAGA ====="
+
+        Map vaga = [
+                empresa_id: perguntar(
+                        scanner,
+                        "ID da empresa responsável: "
+                ).toLong(),
+                nome      : perguntar(scanner, "Nome da vaga: "),
+                descricao : perguntar(scanner, "Descrição da vaga: "),
+                cidade    : perguntar(scanner, "Cidade: "),
+                estado    : perguntar(scanner, "Estado (UF): "),
+                ativa     : true
+        ]
+
+        List<String> competencias = lerCompetencias(scanner)
+
+        banco.criarVaga(vaga, competencias)
+
+        println "Vaga cadastrada com sucesso!"
+    }
+
+    static void atualizarVaga(
+            Scanner scanner,
+            BancoDeDados banco
+    ) {
+        println "\n===== ATUALIZAR VAGA ====="
+
+        long id = perguntar(scanner, "ID da vaga: ").toLong()
+
+        Map vaga = [
+                empresa_id: perguntar(
+                        scanner,
+                        "Novo ID da empresa responsável: "
+                ).toLong(),
+                nome      : perguntar(scanner, "Novo nome da vaga: "),
+                descricao : perguntar(scanner, "Nova descrição: "),
+                cidade    : perguntar(scanner, "Nova cidade: "),
+                estado    : perguntar(scanner, "Novo estado (UF): "),
+                ativa     : perguntar(
+                        scanner,
+                        "A vaga está ativa? (s/n): "
+                ).equalsIgnoreCase("s")
+        ]
+
+        List<String> competencias = lerCompetencias(scanner)
+
+        boolean atualizada = banco.atualizarVaga(
+                id,
+                vaga,
+                competencias
+        )
+
+        if (atualizada) {
+            println "Vaga atualizada com sucesso!"
+        } else {
+            println "Nenhuma vaga encontrada com o ID ${id}."
+        }
+    }
+
+    static void excluirVaga(
+            Scanner scanner,
+            BancoDeDados banco
+    ) {
+        println "\n===== EXCLUIR VAGA ====="
+
+        long id = perguntar(
+                scanner,
+                "ID da vaga que deseja excluir: "
+        ).toLong()
+
+        String confirmacao = perguntar(
+                scanner,
+                "Confirma a exclusão? (s/n): "
+        )
+
+        if (confirmacao.equalsIgnoreCase("s")) {
+            banco.excluirVaga(id)
+            println "Solicitação de exclusão enviada."
+        } else {
+            println "Exclusão cancelada."
+        }
+    }
+
+    // COMPETÊNCIAS
+
+    static void listarCompetencias(BancoDeDados banco) {
+        println "\n===== COMPETÊNCIAS ====="
+
+        def competencias = banco.listarCompetencias()
+
+        if (!competencias) {
+            println "Nenhuma competência cadastrada."
+            return
+        }
+
+        competencias.each { competencia ->
+            println """
+ID: ${competencia.id}
+Nome: ${competencia.nome}
+-----------------------------
+"""
+        }
+    }
+
+    static void cadastrarCompetencia(
+            Scanner scanner,
+            BancoDeDados banco
+    ) {
+        println "\n===== CADASTRAR COMPETÊNCIA ====="
+
+        String nome = perguntar(
+                scanner,
+                "Nome da competência: "
+        )
+
+        banco.criarCompetencia(nome)
+
+        println "Competência cadastrada com sucesso!"
+    }
+
+    static void atualizarCompetencia(
+            Scanner scanner,
+            BancoDeDados banco
+    ) {
+        println "\n===== ATUALIZAR COMPETÊNCIA ====="
+
+        long id = perguntar(
+                scanner,
+                "ID da competência: "
+        ).toLong()
+
+        String nome = perguntar(
+                scanner,
+                "Novo nome da competência: "
+        )
+
+        boolean atualizada = banco.atualizarCompetencia(id, nome)
+
+        if (atualizada) {
+            println "Competência atualizada com sucesso!"
+        } else {
+            println "Nenhuma competência encontrada com o ID ${id}."
+        }
+    }
+
+    static void excluirCompetencia(
+            Scanner scanner,
+            BancoDeDados banco
+    ) {
+        println "\n===== EXCLUIR COMPETÊNCIA ====="
+
+        long id = perguntar(
+                scanner,
+                "ID da competência que deseja excluir: "
+        ).toLong()
+
+        String confirmacao = perguntar(
+                scanner,
+                "Confirma a exclusão? (s/n): "
+        )
+
+        if (confirmacao.equalsIgnoreCase("s")) {
+            banco.excluirCompetencia(id)
+            println "Solicitação de exclusão enviada."
+        } else {
+            println "Exclusão cancelada."
+        }
+    }
+
+
+    // MÉTODOS AUXILIARES
 
     static String perguntar(
             Scanner scanner,
