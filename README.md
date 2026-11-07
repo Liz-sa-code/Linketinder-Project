@@ -92,3 +92,30 @@ Após executar o comando, o menu do Linketinder será exibido:
 Escolha uma opção:
 
 Digite uma das opções disponíveis e pressione Enter.
+
+##Mudanças
+
+Alterações realizadas no frontend
+
+O frontend passou por uma reorganização para utilizar TypeScript com Vite, mantendo a implementação principal em TypeScript sem depender da estrutura React do template inicial.
+
+As principais alterações foram:
+
+Organização das interfaces de dados em type.ts.
+
+Centralização das operações de cadastro, listagem e exclusão em data.ts.
+
+Implementação da navegação entre as telas em main.ts.
+
+Separação da estilização em style.css.
+
+Criação de telas para candidatos e empresas.
+
+Implementação de formulários para cadastro de candidatos, empresas e vagas.
+
+Inclusão de visualização de competências e formação dos candidatos.
+
+Implementação de gráfico com Chart.js para apresentar a distribuição de competências.
+
+Atualmente, os dados utilizados pelo frontend são armazenados no localStorage do navegador. Essa implementação permite testar as funcionalidades da interface, mas não representa uma integração definitiva com o banco PostgreSQL.
+Atualmente, os dados utilizados pelo frontend são armazenados no localStorage do navegador. Essa implementação permite testar as funcionalidades da interface, mas não representa uma integração definitiva com o banco PostgreSQL.

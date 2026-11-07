@@ -1,4 +1,4 @@
-abstract class Pessoa implements PessoaInterface {
+class Pessoa implements PessoaInterface {
 
     String nome
     String email
@@ -7,8 +7,17 @@ abstract class Pessoa implements PessoaInterface {
     String cep
     String descricao
 
-    Pessoa(String nome, String email, String documento,
-           String estado, String cep, String descricao) {
+    Pessoa() {
+    }
+
+    Pessoa(
+            String nome,
+            String email,
+            String documento,
+            String estado,
+            String cep,
+            String descricao
+    ) {
         this.nome = nome
         this.email = email
         this.documento = documento
@@ -18,17 +27,14 @@ abstract class Pessoa implements PessoaInterface {
     }
 
     @Override
-    String getNome() {
-        return nome
-    }
-
-    @Override
-    String getEmail() {
-        return email
-    }
-
-    @Override
-    String getDocumento() {
-        return documento
+    String toString() {
+        return """
+Nome: ${nome}
+Email: ${email}
+Documento: ${documento}
+Estado: ${estado}
+CEP: ${cep}
+Descrição: ${descricao}
+"""
     }
 }

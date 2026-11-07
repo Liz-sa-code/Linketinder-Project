@@ -1,7 +1,6 @@
-
 import Chart from "chart.js/auto";
 
-import type { Candidato, Empresa, Vaga } from "./types";
+import type { Candidato, Empresa, Vaga } from "./type";
 
 import {
     listarCandidatos,
@@ -33,12 +32,12 @@ type Tela =
 let telaAtual: Tela = "inicio";
 let grafico: Chart | undefined;
 
-function gerarId(): string {
-    return crypto.randomUUID();
+function gerarId(): number {
+    return Date.now() + Math.floor(Math.random() * 1000);
 }
 
-function escapar(valor: string): string {
-    return valor.replace(/[&<>"']/g, (caractere) => {
+function escapar(valor: unknown): string {
+    return String(valor ?? "").replace(/[&<>"']/g, caractere => {
         const entidades: Record<string, string> = {
             "&": "&amp;",
             "<": "&lt;",
@@ -71,211 +70,241 @@ function botoesNavegacao(): string {
     ];
 
     return links.map(([tela, texto]) => `
-        <button
-            class="nav-button ${telaAtual === tela ? "selecionado" : ""}"
-            data-tela="${tela}"
-        >
-            ${texto}
-        </button>
+<button
+class="nav-button ${telaAtual === tela ? "selecionado" : ""}"
+data-tela="${tela}"
+type="button">
+    ${texto}
+</button>
     `).join("");
 }
 
 function estrutura(conteudo: string): void {
     app!.innerHTML = `
-        <header class="cabecalho">
-            <a href="#" class="marca" data-tela="inicio">
-                <span class="marca-icone">L</span>
-                <span>Linketinder</span>
-            </a>
+<header class="cabecalho">
+<a href="#" class="marca" data-tela="inicio">
+<span class="marca-icone">L</span>
+    <span>Linketinder</span>
+    </a>
 
-            <nav class="navegacao">
-                ${botoesNavegacao()}
-            </nav>
-        </header>
+    <nav class="navegacao">
+    ${botoesNavegacao()}
+</nav>
+</header>
 
-        <main class="container">
-            ${conteudo}
-        </main>
+<main class="container">
+    ${conteudo}
+</main>
 
-        <footer>
-            Linketinder · Protótipo acadêmico em TypeScript
-        </footer>
+<footer>
+Linketinder · Projeto acadêmico
+</footer>
     `;
 }
 
 function navegar(tela: Tela): void {
     grafico?.destroy();
     grafico = undefined;
+
     telaAtual = tela;
 
     switch (tela) {
         case "inicio":
             inicio();
             break;
+
         case "cadastro-candidato":
             telaCadastroCandidato();
             break;
+
         case "cadastro-empresa":
             telaCadastroEmpresa();
             break;
+
         case "perfil-candidato":
             perfilCandidato();
             break;
+
         case "perfil-empresa":
             perfilEmpresa();
             break;
     }
 }
 
+// INÍCIO
+
 function inicio(): void {
     estrutura(`
-        <section class="hero">
-            <div>
-                <span class="etiqueta">TALENTOS E OPORTUNIDADES</span>
-                <h1>O próximo passo da sua carreira começa aqui.</h1>
-                <p>
-                    Conectamos competências, formação e oportunidades
-                    para aproximar candidatos e empresas.
-                </p>
+<section class="hero">
+<div>
+    <span class="etiqueta">TALENTOS E OPORTUNIDADES</span>
 
-                <div class="acoes">
-                    <button class="botao primario"
-                        data-tela="cadastro-candidato">
-                        Sou candidato
-                    </button>
+<h1>
+O próximo passo da sua carreira começa aqui.
+</h1>
 
-                    <button class="botao secundario"
-                        data-tela="cadastro-empresa">
-                        Sou empresa
-                    </button>
-                </div>
-            </div>
+<p>
+Conectamos competências, formação e oportunidades
+para aproximar candidatos e empresas.
+</p>
 
-            <div class="ilustracao">
-                <div class="cartao-ilustracao">
-                    <span class="estrela">✦</span>
-                    <h2>Match de talentos</h2>
-                    <p>Competências que conectam.</p>
-                </div>
-            </div>
-        </section>
+<div class="acoes">
+<button class="botao primario"
+data-tela="cadastro-candidato">
+    Sou candidato
+</button>
 
-        <section class="resumos">
-            <article class="resumo">
-                <span>Candidatos</span>
-                <strong>${listarCandidatos().length}</strong>
-            </article>
+<button class="botao secundario"
+data-tela="cadastro-empresa">
+    Sou empresa
+</button>
+</div>
+</div>
 
-            <article class="resumo">
-                <span>Empresas</span>
-                <strong>${listarEmpresas().length}</strong>
-            </article>
+<div class="ilustracao">
+<div class="cartao-ilustracao">
+<span class="estrela">✦</span>
+<h2>Match de talentos</h2>
+<p>Competências que conectam.</p>
+</div>
+</div>
+</section>
 
-            <article class="resumo">
-                <span>Vagas</span>
-                <strong>${listarVagas().length}</strong>
-            </article>
-        </section>
+<section class="resumos">
+<article class="resumo">
+    <span>Candidatos</span>
+    <strong>${listarCandidatos().length}</strong>
+</article>
 
-        <section class="secao">
-            <h2>Explore o Linketinder</h2>
+<article class="resumo">
+    <span>Empresas</span>
+    <strong>${listarEmpresas().length}</strong>
+</article>
 
-            <div class="grade">
-                <article class="cartao">
-                    <h3>Perfil do candidato</h3>
-                    <p>Consulte vagas e competências desejadas.</p>
-                    <button class="botao secundario"
-                        data-tela="perfil-candidato">
-                        Consultar vagas
-                    </button>
-                </article>
+<article class="resumo">
+    <span>Vagas</span>
+    <strong>${listarVagas().filter(v => v.ativa).length}</strong>
+</article>
+</section>
 
-                <article class="cartao">
-                    <h3>Perfil da empresa</h3>
-                    <p>Visualize candidatos anônimos e estatísticas.</p>
-                    <button class="botao secundario"
-                        data-tela="perfil-empresa">
-                        Consultar talentos
-                    </button>
-                </article>
-            </div>
-        </section>
+<section class="secao">
+    <h2>Explore o Linketinder</h2>
+
+<div class="grade">
+<article class="cartao">
+    <h3>Perfil do candidato</h3>
+<p>Consulte oportunidades e competências desejadas.</p>
+
+<button class="botao secundario"
+data-tela="perfil-candidato">
+    Consultar vagas
+</button>
+</article>
+
+<article class="cartao">
+    <h3>Perfil da empresa</h3>
+<p>Visualize candidatos e estatísticas de competências.</p>
+
+<button class="botao secundario"
+data-tela="perfil-empresa">
+    Consultar talentos
+</button>
+</article>
+</div>
+</section>
     `);
 }
 
-// Cadastro de candidato
+// CADASTRO DE CANDIDATO
 
 function telaCadastroCandidato(): void {
     estrutura(`
-        <section class="titulo-pagina">
-            <span class="etiqueta">CADASTRO</span>
-            <h1>Crie seu perfil de candidato</h1>
-            <p>Apresente sua formação e suas competências.</p>
-        </section>
+<section class="titulo-pagina">
+<span class="etiqueta">CADASTRO</span>
+    <h1>Crie seu perfil de candidato</h1>
+<p>Apresente sua formação e suas competências.</p>
+</section>
 
-        <form id="form-candidato" class="formulario">
-            <label>
-                Nome completo *
-                <input name="nome" required maxlength="100">
-            </label>
+<form id="form-candidato" class="formulario">
 
-            <label>
-                E-mail *
-                <input name="email" type="email" required maxlength="150">
-            </label>
+<div class="duas-colunas">
+<label>
+    Nome *
+<input name="nome" required maxlength="100">
+</label>
 
-            <div class="duas-colunas">
-                <label>
-                    CPF *
-                    <input name="cpf" required maxlength="14">
-                </label>
+<label>
+Sobrenome *
+<input name="sobrenome" required maxlength="100">
+</label>
+</div>
 
-                <label>
-                    Idade *
-                    <input name="idade" type="number"
-                        min="16" max="100" required>
-                </label>
-            </div>
+<label>
+E-mail *
+<input name="email" type="email" required maxlength="150">
+    </label>
 
-            <div class="duas-colunas">
-                <label>
-                    Estado (UF) *
-                    <input name="estado" maxlength="2" required>
-                </label>
+    <div class="duas-colunas">
+<label>
+    CPF *
+<input name="cpf" required maxlength="14">
+    </label>
 
-                <label>
-                    CEP *
-                    <input name="cep" maxlength="9" required>
-                </label>
-            </div>
+    <label>
+    Data de nascimento *
+<input name="data_nascimento"
+type="date"
+required>
+</label>
+</div>
 
-            <label>
-                Formação *
-                <input name="formacao" required maxlength="160">
-            </label>
+<div class="duas-colunas">
+<label>
+    País *
+<input name="pais" value="Brasil" required maxlength="100">
+</label>
 
-            <label>
-                Competências *
-                <input name="competencias" required
-                    placeholder="Python, Java, SQL">
-                <small>Separe as competências por vírgulas.</small>
-            </label>
+<label>
+CEP *
+<input name="cep" required maxlength="15">
+</label>
+</div>
 
-            <label>
-                Descrição pessoal
-                <textarea name="descricao" rows="4" maxlength="500"></textarea>
-            </label>
+<label>
+Senha *
+<input name="senha" type="password"
+required minlength="8">
+</label>
 
-            <button class="botao primario" type="submit">
-                Cadastrar candidato
-            </button>
+<label>
+Formação *
+<input name="formacao" required maxlength="160">
+</label>
 
-            <p id="mensagem-candidato" class="mensagem"></p>
-        </form>
-    `);
+<label>
+Competências *
+<input name="competencias" required
+placeholder="Python, Java, SQL">
+<small>Separe as competências por vírgulas.</small>
+</label>
+
+<label>
+Descrição
+<textarea name="descricao"
+rows="4"
+maxlength="500"></textarea>
+    </label>
+
+    <button class="botao primario" type="submit">
+    Cadastrar candidato
+</button>
+
+<p id="mensagem-candidato" class="mensagem"></p>
+    </form>
+        `);
 
     document.querySelector<HTMLFormElement>("#form-candidato")!
-        .addEventListener("submit", (evento) => {
+        .addEventListener("submit", evento => {
             evento.preventDefault();
 
             const form = evento.currentTarget as HTMLFormElement;
@@ -284,10 +313,11 @@ function telaCadastroCandidato(): void {
             const candidato: Candidato = {
                 id: gerarId(),
                 nome: String(dados.get("nome")).trim(),
+                sobrenome: String(dados.get("sobrenome")).trim(),
                 email: String(dados.get("email")).trim(),
                 cpf: String(dados.get("cpf")).trim(),
-                idade: Number(dados.get("idade")),
-                estado: String(dados.get("estado")).trim().toUpperCase(),
+                data_nascimento: String(dados.get("data_nascimento")),
+                pais: String(dados.get("pais")).trim(),
                 cep: String(dados.get("cep")).trim(),
                 formacao: String(dados.get("formacao")).trim(),
                 competencias: competencias(
@@ -297,6 +327,7 @@ function telaCadastroCandidato(): void {
             };
 
             criarCandidato(candidato);
+
             form.reset();
 
             document.querySelector("#mensagem-candidato")!
@@ -304,65 +335,68 @@ function telaCadastroCandidato(): void {
         });
 }
 
-// Cadastro de empresa
+// CADASTRO DE EMPRESA
 
 function telaCadastroEmpresa(): void {
     estrutura(`
-        <section class="titulo-pagina">
-            <span class="etiqueta">CADASTRO</span>
-            <h1>Cadastre sua empresa</h1>
-            <p>Encontre pessoas com as competências que sua equipe precisa.</p>
-        </section>
+    <section class="titulo-pagina">
+<span class="etiqueta">CADASTRO</span>
+    <h1>Cadastre sua empresa</h1>
+<p>Encontre pessoas com as competências que sua equipe precisa.</p>
+</section>
 
-        <form id="form-empresa" class="formulario">
-            <label>
-                Nome da empresa *
-                <input name="nome" required maxlength="100">
-            </label>
+<form id="form-empresa" class="formulario">
 
-            <label>
-                E-mail corporativo *
-                <input name="email" type="email" required maxlength="150">
-            </label>
+    <label>
+        Nome da empresa *
+<input name="nome" required maxlength="150">
+    </label>
 
-            <label>
-                CNPJ *
-                <input name="cnpj" required maxlength="18">
-            </label>
+    <label>
+    E-mail corporativo *
+<input name="email" type="email" required maxlength="150">
+</label>
 
-            <label>
-                País *
-                <input name="pais" value="Brasil" required maxlength="60">
-            </label>
+<label>
+CNPJ *
+<input name="cnpj" required maxlength="18">
+    </label>
 
-            <div class="duas-colunas">
-                <label>
-                    Estado (UF) *
-                    <input name="estado" required maxlength="2">
-                </label>
+    <div class="duas-colunas">
+<label>
+    País *
+<input name="pais" value="Brasil" required maxlength="100">
+</label>
 
-                <label>
-                    CEP *
-                    <input name="cep" required maxlength="9">
-                </label>
-            </div>
+<label>
+CEP *
+<input name="cep" required maxlength="15">
+</label>
+</div>
 
-            <label>
-                Descrição da empresa *
-                <textarea name="descricao" required rows="4"
-                    maxlength="500"></textarea>
-            </label>
+<label>
+Senha *
+<input name="senha" type="password"
+required minlength="8">
+    </label>
 
-            <button class="botao primario" type="submit">
-                Cadastrar empresa
-            </button>
+    <label>
+    Descrição
+    <textarea name="descricao"
+rows="4"
+maxlength="500"></textarea>
+    </label>
 
-            <p id="mensagem-empresa" class="mensagem"></p>
-        </form>
-    `);
+    <button class="botao primario" type="submit">
+    Cadastrar empresa
+</button>
+
+<p id="mensagem-empresa" class="mensagem"></p>
+    </form>
+        `);
 
     document.querySelector<HTMLFormElement>("#form-empresa")!
-        .addEventListener("submit", (evento) => {
+        .addEventListener("submit", evento => {
             evento.preventDefault();
 
             const form = evento.currentTarget as HTMLFormElement;
@@ -374,12 +408,12 @@ function telaCadastroEmpresa(): void {
                 email: String(dados.get("email")).trim(),
                 cnpj: String(dados.get("cnpj")).trim(),
                 pais: String(dados.get("pais")).trim(),
-                estado: String(dados.get("estado")).trim().toUpperCase(),
                 cep: String(dados.get("cep")).trim(),
-                descricao: String(dados.get("descricao")).trim()
+                descricao: String(dados.get("descricao") ?? "").trim()
             };
 
             criarEmpresa(empresa);
+
             form.reset();
 
             document.querySelector("#mensagem-empresa")!
@@ -387,73 +421,78 @@ function telaCadastroEmpresa(): void {
         });
 }
 
-// Perfil do candidato
+// PERFIL DO CANDIDATO
 
 function perfilCandidato(): void {
     estrutura(`
-        <section class="titulo-pagina">
-            <span class="etiqueta">ÁREA DO CANDIDATO</span>
-            <h1>Vagas disponíveis</h1>
-            <p>Encontre oportunidades que combinam com seu perfil.</p>
-        </section>
+    <section class="titulo-pagina">
+<span class="etiqueta">ÁREA DO CANDIDATO</span>
+<h1>Vagas disponíveis</h1>
+<p>Encontre oportunidades que combinam com seu perfil.</p>
+</section>
 
-        <label class="busca">
-            Buscar vaga
-            <input id="busca-vagas"
-                placeholder="Digite o cargo ou uma competência">
-        </label>
+<label class="busca">
+    Buscar vaga
+<input id="busca-vagas"
+placeholder="Digite o cargo ou uma competência">
+    </label>
 
-        <div id="lista-vagas" class="grade-vagas"></div>
-    `);
+    <div id="lista-vagas" class="grade-vagas"></div>
+        `);
 
     const busca = document.querySelector<HTMLInputElement>("#busca-vagas")!;
 
     const atualizar = (): void => {
         const consulta = busca.value.toLocaleLowerCase("pt-BR");
 
-        const filtradas = listarVagas().filter((vaga) => {
-            const empresa = listarEmpresas()
-                .find((item) => item.id === vaga.empresaId);
+        const filtradas = listarVagas().filter(vaga => {
+            if (!vaga.ativa) return false;
 
             const texto = [
-                vaga.titulo,
-                vaga.local,
+                vaga.nome,
+                vaga.cidade,
+                vaga.estado,
                 vaga.descricao,
                 ...vaga.competencias
             ].join(" ").toLocaleLowerCase("pt-BR");
 
-            return texto.includes(consulta) && Boolean(empresa);
+            return texto.includes(consulta);
         });
 
         document.querySelector("#lista-vagas")!.innerHTML =
             filtradas.length
-                ? filtradas.map((vaga) => `
-                    <article class="cartao vaga">
-                        <span class="etiqueta">OPORTUNIDADE</span>
-                        <h2>${escapar(vaga.titulo)}</h2>
-                        <p>📍 ${escapar(vaga.local)}</p>
-                        <p>${escapar(vaga.descricao)}</p>
+                ? filtradas.map(vaga => `
+    <article class="cartao vaga">
+<span class="etiqueta">OPORTUNIDADE</span>
 
-                        <div class="competencias">
-                            ${vaga.competencias.map(skill =>
-                    `<span>${escapar(skill)}</span>`
-                ).join("")}
-                        </div>
+    <h2>${escapar(vaga.nome)}</h2>
 
-                        <p class="anonimo">
-                            Empresa confidencial até o match
-                        </p>
-                    </article>
-                `).join("")
+<p>
+                            📍 ${escapar(vaga.cidade)} -
+    ${escapar(vaga.estado)}
+</p>
+
+<p>${escapar(vaga.descricao)}</p>
+
+<div class="competencias">
+    ${vaga.competencias.map(skill =>
+    `<span>${escapar(skill)}</span>`
+).join("")}
+</div>
+
+<p class="anonimo">
+    Empresa confidencial até o match
+</p>
+</article>
+    `).join("")
                 : `<p class="vazio">Nenhuma vaga encontrada.</p>`;
-    };
+};
 
-    busca.addEventListener("input", atualizar);
-    atualizar();
+busca.addEventListener("input", atualizar);
+atualizar();
 }
 
-// Perfil da empresa
-
+// PERFIL DA EMPRESA
 
 function perfilEmpresa(): void {
     const lista = listarCandidatos();
@@ -463,7 +502,7 @@ function perfilEmpresa(): void {
         <section class="titulo-pagina">
             <span class="etiqueta">ÁREA DA EMPRESA</span>
             <h1>Banco de talentos</h1>
-            <p>Explore formações e competências de maneira anônima.</p>
+            <p>Explore formações e competências dos candidatos.</p>
         </section>
 
         <section class="painel">
@@ -472,6 +511,7 @@ function perfilEmpresa(): void {
                 <h2>Candidatos por competência</h2>
                 <p>Quantidade de candidatos que informaram cada habilidade.</p>
             </div>
+
             <div class="grafico">
                 <canvas id="grafico-competencias"></canvas>
             </div>
@@ -483,59 +523,72 @@ function perfilEmpresa(): void {
             ${
         empresas.length > 0
             ? `
-                    <form id="form-vaga" class="formulario">
-                        <label>
-                            Empresa responsável *
-                            <select name="empresaId" required>
-                                ${empresas.map(empresa => `
-                                    <option value="${escapar(empresa.id)}">
-                                        ${escapar(empresa.nome)}
-                                    </option>
-                                `).join("")}
-                            </select>
-                        </label>
+                        <form id="form-vaga" class="formulario">
 
-                        <label>
-                            Título da vaga *
-                            <input name="titulo"
-                                placeholder="Ex.: Desenvolvedor Frontend"
-                                required>
-                        </label>
+                            <label>
+                                Empresa responsável *
+                                <select name="empresa_id" required>
+                                    ${empresas.map(empresa => `
+                                        <option value="${empresa.id}">
+                                            ${escapar(empresa.nome)}
+                                        </option>
+                                    `).join("")}
+                                </select>
+                            </label>
 
-                        <label>
-                            Localidade *
-                            <input name="local"
-                                placeholder="Ex.: Remoto ou Bahia"
-                                required>
-                        </label>
+                            <label>
+                                Nome da vaga *
+                                <input name="nome"
+                                    placeholder="Ex.: Desenvolvedor Frontend"
+                                    required>
+                            </label>
 
-                        <label>
-                            Competências desejadas *
-                            <input name="competencias"
-                                placeholder="Ex.: TypeScript, Java, SQL"
-                                required>
-                        </label>
+                            <div class="duas-colunas">
+                                <label>
+                                    Cidade *
+                                    <input name="cidade" required>
+                                </label>
 
-                        <label>
-                            Descrição da vaga *
-                            <textarea name="descricao"
-                                rows="4"
-                                placeholder="Descreva as atividades da vaga"
-                                required></textarea>
-                        </label>
+                                <label>
+                                    Estado *
+                                    <input name="estado" required>
+                                </label>
+                            </div>
 
-                        <button class="botao primario" type="submit">
-                            Publicar vaga
-                        </button>
+                            <label>
+                                Competências desejadas *
+                                <input name="competencias"
+                                    placeholder="TypeScript, Java, SQL"
+                                    required>
+                            </label>
 
-                        <p id="mensagem-vaga" class="mensagem"></p>
-                    </form>
-                `
+                            <label>
+                                Descrição *
+                                <textarea name="descricao"
+                                    rows="4"
+                                    required></textarea>
+                            </label>
+
+                            <label>
+                                Situação da vaga
+                                <select name="ativa">
+                                    <option value="true">Ativa</option>
+                                    <option value="false">Inativa</option>
+                                </select>
+                            </label>
+
+                            <button class="botao primario" type="submit">
+                                Publicar vaga
+                            </button>
+
+                            <p id="mensagem-vaga" class="mensagem"></p>
+                        </form>
+                    `
             : `
-                    <p class="vazio">
-                        Cadastre uma empresa antes de publicar uma vaga.
-                    </p>
-                `
+                        <p class="vazio">
+                            Cadastre uma empresa antes de publicar uma vaga.
+                        </p>
+                    `
     }
         </section>
 
@@ -553,10 +606,11 @@ function perfilEmpresa(): void {
     `);
 
     // Gráfico de competências
+
     const contagem = new Map<string, number>();
 
-    lista.forEach((candidato) => {
-        candidato.competencias.forEach((competencia) => {
+    lista.forEach(candidato => {
+        candidato.competencias.forEach(competencia => {
             const chave = competencia.trim();
 
             if (chave) {
@@ -591,13 +645,7 @@ function perfilEmpresa(): void {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) =>
-                                `${context.parsed.y} candidato(s)`
-                        }
-                    }
+                    legend: { display: false }
                 },
                 scales: {
                     y: {
@@ -616,10 +664,11 @@ function perfilEmpresa(): void {
     }
 
     // Cadastro de vagas
+
     const formularioVaga =
         document.querySelector<HTMLFormElement>("#form-vaga");
 
-    formularioVaga?.addEventListener("submit", (evento) => {
+    formularioVaga?.addEventListener("submit", evento => {
         evento.preventDefault();
 
         const formulario = evento.currentTarget as HTMLFormElement;
@@ -627,14 +676,15 @@ function perfilEmpresa(): void {
 
         const vaga: Vaga = {
             id: gerarId(),
-            empresaId: String(dados.get("empresaId")),
-            titulo: String(dados.get("titulo")).trim(),
-            local: String(dados.get("local")).trim(),
-            competencias: String(dados.get("competencias"))
-                .split(",")
-                .map(item => item.trim())
-                .filter(Boolean),
-            descricao: String(dados.get("descricao")).trim()
+            empresa_id: Number(dados.get("empresa_id")),
+            nome: String(dados.get("nome")).trim(),
+            cidade: String(dados.get("cidade")).trim(),
+            estado: String(dados.get("estado")).trim(),
+            descricao: String(dados.get("descricao")).trim(),
+            ativa: String(dados.get("ativa")) === "true",
+            competencias: competencias(
+                String(dados.get("competencias"))
+            )
         };
 
         criarVaga(vaga);
@@ -642,12 +692,14 @@ function perfilEmpresa(): void {
         formulario.reset();
 
         const mensagem = document.querySelector("#mensagem-vaga");
+
         if (mensagem) {
             mensagem.textContent = "Vaga publicada com sucesso!";
         }
     });
 
     // Busca e exibição dos candidatos
+
     const busca = document.querySelector<HTMLInputElement>(
         "#busca-candidatos"
     )!;
@@ -655,10 +707,11 @@ function perfilEmpresa(): void {
     const atualizar = (): void => {
         const consulta = busca.value.toLocaleLowerCase("pt-BR");
 
-        const filtrados = listarCandidatos().filter((candidato) => {
+        const filtrados = listarCandidatos().filter(candidato => {
             const texto = [
                 candidato.formacao,
-                candidato.estado,
+                candidato.pais,
+                candidato.cep,
                 ...candidato.competencias
             ].join(" ").toLocaleLowerCase("pt-BR");
 
@@ -678,18 +731,21 @@ function perfilEmpresa(): void {
                                 <th>Perfil</th>
                                 <th>Formação</th>
                                 <th>Competências</th>
-                                <th>Estado</th>
+                                <th>País</th>
                                 <th>Ação</th>
                             </tr>
                         </thead>
+
                         <tbody>
-                            ${filtrados.map((candidato) => `
+                            ${filtrados.map(candidato => `
                                 <tr>
                                     <td>
                                         Candidato anônimo
                                         <small>Identidade protegida</small>
                                     </td>
+
                                     <td>${escapar(candidato.formacao)}</td>
+
                                     <td>
                                         <div class="competencias">
                                             ${candidato.competencias.map(skill =>
@@ -697,11 +753,13 @@ function perfilEmpresa(): void {
             ).join("")}
                                         </div>
                                     </td>
-                                    <td>${escapar(candidato.estado)}</td>
+
+                                    <td>${escapar(candidato.pais)}</td>
+
                                     <td>
                                         <button
                                             class="botao-excluir"
-                                            data-excluir-candidato="${escapar(candidato.id)}"
+                                            data-excluir-candidato="${candidato.id}"
                                             type="button">
                                             Excluir
                                         </button>
@@ -719,10 +777,9 @@ function perfilEmpresa(): void {
     atualizar();
 }
 
+// NAVEGAÇÃO E EXCLUSÕES
 
-// Navegação e exclusões
-
-app.addEventListener("click", (evento) => {
+app.addEventListener("click", evento => {
     const alvo = evento.target as HTMLElement;
 
     const botaoTela = alvo.closest<HTMLElement>("[data-tela]");
@@ -743,7 +800,7 @@ app.addEventListener("click", (evento) => {
         );
 
         if (confirmar) {
-            excluirCandidato(botaoExcluir.dataset.excluirCandidato);
+            excluirCandidato(Number(botaoExcluir.dataset.excluirCandidato));
             perfilEmpresa();
         }
     }

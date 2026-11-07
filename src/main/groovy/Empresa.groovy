@@ -1,29 +1,43 @@
 class Empresa extends Pessoa {
 
     String pais
-    List<String> competencias
+    List<Competencia> competencias = []
 
-    Empresa(String nome, String emailCorporativo, String cnpj,
-            String pais, String estado, String cep,
-            String descricao, List<String> competencias) {
+    Empresa() {
+        super()
+    }
 
-        super(nome, emailCorporativo, cnpj, estado, cep, descricao)
-
+    Empresa(
+            String nome,
+            String email,
+            String documento,
+            String estado,
+            String cep,
+            String descricao,
+            String pais,
+            List<Competencia> competencias = []
+    ) {
+        super(nome, email, documento, estado, cep, descricao)
         this.pais = pais
-        this.competencias = competencias
+        this.competencias = competencias ?: []
+    }
+
+    void adicionarCompetencia(Competencia competencia) {
+        if (competencia != null && !competencias.contains(competencia)) {
+            competencias.add(competencia)
+        }
+    }
+
+    void removerCompetencia(Competencia competencia) {
+        competencias.remove(competencia)
     }
 
     @Override
     String toString() {
         return """
-Empresa: $nome
-E-mail corporativo: $email
-CNPJ: $documento
-País: $pais
-Estado: $estado
-CEP: $cep
-Descrição: $descricao
-Competências procuradas: ${competencias.join(', ')}
+${super.toString()}
+País: ${pais}
+Competências: ${competencias.join(', ')}
 """
     }
 }

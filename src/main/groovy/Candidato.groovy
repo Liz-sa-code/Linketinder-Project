@@ -1,28 +1,42 @@
 class Candidato extends Pessoa {
 
-    int idade
-    List<String> competencias
+    Integer idade
+    List<Competencia> competencias = []
 
-    Candidato(String nome, String email, String cpf,
-              int idade, String estado, String cep,
-              String descricao, List<String> competencias) {
+    Candidato() {
+        super()
+    }
 
-        super(nome, email, cpf, estado, cep, descricao)
-
+    Candidato(
+            String nome,
+            String email,
+            String documento,
+            String estado,
+            String cep,
+            String descricao,
+            Integer idade,
+            List<Competencia> competencias = []
+    ) {
+        super(nome, email, documento, estado, cep, descricao)
         this.idade = idade
-        this.competencias = competencias
+        this.competencias = competencias ?: []
+    }
+
+    void adicionarCompetencia(Competencia competencia) {
+        if (competencia != null && !competencias.contains(competencia)) {
+            competencias.add(competencia)
+        }
+    }
+
+    void removerCompetencia(Competencia competencia) {
+        competencias.remove(competencia)
     }
 
     @Override
     String toString() {
         return """
-Nome: $nome
-E-mail: $email
-CPF: $documento
-Idade: $idade
-Estado: $estado
-CEP: $cep
-Descrição: $descricao
+${super.toString()}
+Idade: ${idade}
 Competências: ${competencias.join(', ')}
 """
     }

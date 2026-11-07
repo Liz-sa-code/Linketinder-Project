@@ -1,5 +1,4 @@
-
-import type { Candidato, Empresa, Vaga } from "./types";
+import type { Candidato, Empresa, Vaga } from "./type";
 
 const CHAVES = {
     candidatos: "linketinder_candidatos",
@@ -7,38 +6,43 @@ const CHAVES = {
     vagas: "linketinder_vagas"
 };
 
+// Dados iniciais
+
 const candidatosIniciais: Candidato[] = [
     {
-        id: "c1",
-        nome: "Ana Souza",
+        id: 1,
+        nome: "Ana",
+        sobrenome: "Souza",
+        data_nascimento: "2002-05-15",
         email: "ana@example.com",
         cpf: "000.000.000-00",
-        idade: 24,
-        estado: "BA",
+        pais: "Brasil",
         cep: "45000-000",
         descricao: "Interesse em desenvolvimento web.",
         formacao: "Sistemas de Informação",
         competencias: ["TypeScript", "JavaScript", "HTML", "CSS"]
     },
     {
-        id: "c2",
-        nome: "Bruno Lima",
+        id: 2,
+        nome: "Bruno",
+        sobrenome: "Lima",
+        data_nascimento: "1999-08-20",
         email: "bruno@example.com",
         cpf: "111.111.111-11",
-        idade: 27,
-        estado: "BA",
+        pais: "Brasil",
         cep: "40000-000",
         descricao: "Interesse em backend e dados.",
         formacao: "Ciência da Computação",
         competencias: ["Python", "Java", "SQL"]
     },
     {
-        id: "c3",
-        nome: "Carla Mendes",
+        id: 3,
+        nome: "Carla",
+        sobrenome: "Mendes",
+        data_nascimento: "2001-03-10",
         email: "carla@example.com",
         cpf: "222.222.222-22",
-        idade: 25,
-        estado: "SP",
+        pais: "Brasil",
         cep: "01000-000",
         descricao: "Desenvolvimento de sistemas.",
         formacao: "Engenharia de Software",
@@ -48,12 +52,11 @@ const candidatosIniciais: Candidato[] = [
 
 const empresasIniciais: Empresa[] = [
     {
-        id: "e1",
+        id: 1,
         nome: "Paçoca Tech",
         email: "rh@pacocatech.example",
         cnpj: "00.000.000/0001-00",
         pais: "Brasil",
-        estado: "BA",
         cep: "40000-000",
         descricao: "Empresa demonstrativa de tecnologia."
     }
@@ -61,30 +64,38 @@ const empresasIniciais: Empresa[] = [
 
 const vagasIniciais: Vaga[] = [
     {
-        id: "v1",
-        empresaId: "e1",
-        titulo: "Desenvolvedor Frontend Júnior",
-        local: "Remoto",
+        id: 1,
+        empresa_id: 1,
+        nome: "Desenvolvedor Frontend Júnior",
+        cidade: "Remoto",
+        estado: "BA",
         descricao: "Desenvolvimento de interfaces web.",
+        ativa: true,
         competencias: ["TypeScript", "JavaScript", "CSS"]
     },
     {
-        id: "v2",
-        empresaId: "e1",
-        titulo: "Desenvolvedor Backend Júnior",
-        local: "Bahia",
+        id: 2,
+        empresa_id: 1,
+        nome: "Desenvolvedor Backend Júnior",
+        cidade: "Salvador",
+        estado: "BA",
         descricao: "Desenvolvimento de APIs e serviços.",
+        ativa: true,
         competencias: ["Java", "SQL"]
     },
     {
-        id: "v3",
-        empresaId: "e1",
-        titulo: "Estágio em Dados",
-        local: "Remoto",
+        id: 3,
+        empresa_id: 1,
+        nome: "Estágio em Dados",
+        cidade: "Remoto",
+        estado: "BA",
         descricao: "Análise e preparação de dados.",
+        ativa: true,
         competencias: ["Python", "SQL"]
     }
 ];
+
+// Funções auxiliares
 
 function ler<T>(chave: string, padrao: T[]): T[] {
     const salvo = localStorage.getItem(chave);
@@ -98,6 +109,7 @@ function ler<T>(chave: string, padrao: T[]): T[] {
     }
 
     localStorage.setItem(chave, JSON.stringify(padrao));
+
     return padrao;
 }
 
@@ -112,16 +124,20 @@ export function listarCandidatos(): Candidato[] {
 }
 
 export function criarCandidato(candidato: Candidato): void {
+    const candidatos = listarCandidatos();
+
     salvar(CHAVES.candidatos, [
-        ...listarCandidatos(),
+        ...candidatos,
         candidato
     ]);
 }
 
-export function excluirCandidato(id: string): void {
+export function excluirCandidato(id: number): void {
+    const candidatos = listarCandidatos();
+
     salvar(
         CHAVES.candidatos,
-        listarCandidatos().filter(c => c.id !== id)
+        candidatos.filter(candidato => candidato.id !== id)
     );
 }
 
@@ -132,21 +148,27 @@ export function listarEmpresas(): Empresa[] {
 }
 
 export function criarEmpresa(empresa: Empresa): void {
+    const empresas = listarEmpresas();
+
     salvar(CHAVES.empresas, [
-        ...listarEmpresas(),
+        ...empresas,
         empresa
     ]);
 }
 
-export function excluirEmpresa(id: string): void {
+export function excluirEmpresa(id: number): void {
+    const empresas = listarEmpresas();
+
     salvar(
         CHAVES.empresas,
-        listarEmpresas().filter(e => e.id !== id)
+        empresas.filter(empresa => empresa.id !== id)
     );
+
+    const vagas = listarVagas();
 
     salvar(
         CHAVES.vagas,
-        listarVagas().filter(v => v.empresaId !== id)
+        vagas.filter(vaga => vaga.empresa_id !== id)
     );
 }
 
@@ -157,12 +179,19 @@ export function listarVagas(): Vaga[] {
 }
 
 export function criarVaga(vaga: Vaga): void {
-    salvar(CHAVES.vagas, [...listarVagas(), vaga]);
+    const vagas = listarVagas();
+
+    salvar(CHAVES.vagas, [
+        ...vagas,
+        vaga
+    ]);
 }
 
-export function excluirVaga(id: string): void {
+export function excluirVaga(id: number): void {
+    const vagas = listarVagas();
+
     salvar(
         CHAVES.vagas,
-        listarVagas().filter(v => v.id !== id)
+        vagas.filter(vaga => vaga.id !== id)
     );
 }
