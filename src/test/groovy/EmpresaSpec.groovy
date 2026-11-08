@@ -1,5 +1,8 @@
 
 import spock.lang.Specification
+import model.Empresa
+import model.Competencia
+import spock.lang.Specification
 
 class EmpresaSpec extends Specification {
 

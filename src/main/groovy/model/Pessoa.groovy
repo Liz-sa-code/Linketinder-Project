@@ -1,3 +1,5 @@
+package model
+
 abstract class Pessoa implements PessoaInterface {
 
     String nome

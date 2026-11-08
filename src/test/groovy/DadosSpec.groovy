@@ -1,5 +1,9 @@
-
 import spock.lang.Specification
+
+import model.Candidato
+import model.Empresa
+import model.Competencia
+import model.Dados
 
 class DadosSpec extends Specification {
 

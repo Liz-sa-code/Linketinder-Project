@@ -1,5 +1,7 @@
 
 import spock.lang.Specification
+import model.Candidato
+import model.Competencia
 
 class CandidatoSpec extends Specification {
 

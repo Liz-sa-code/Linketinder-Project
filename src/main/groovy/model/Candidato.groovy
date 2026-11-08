@@ -1,31 +1,26 @@
-import java.math.BigDecimal
+package model
 
-class Vaga {
+class Candidato extends Pessoa {
 
-    Long id
-    String titulo
-    String descricao
-    String localidade
-    BigDecimal salario
-    Empresa empresa
+    Integer idade
     List<Competencia> competencias = []
 
-    Vaga() {
+    Candidato() {
+        super()
     }
 
-    Vaga(
-            String titulo,
+    Candidato(
+            String nome,
+            String email,
+            String documento,
+            String estado,
+            String cep,
             String descricao,
-            String localidade,
-            BigDecimal salario,
-            Empresa empresa,
+            Integer idade,
             List<Competencia> competencias = []
     ) {
-        this.titulo = titulo
-        this.descricao = descricao
-        this.localidade = localidade
-        this.salario = salario
-        this.empresa = empresa
+        super(nome, email, documento, estado, cep, descricao)
+        this.idade = idade
         this.competencias = competencias ?: []
     }
 
@@ -42,11 +37,8 @@ class Vaga {
     @Override
     String toString() {
         return """
-Vaga: ${titulo}
-Descrição: ${descricao}
-Localidade: ${localidade}
-Salário: ${salario}
-Empresa: ${empresa?.nome}
+${super.toString()}
+Idade: ${idade}
 Competências: ${competencias.join(', ')}
 """
     }

@@ -1,24 +1,31 @@
-class Empresa extends Pessoa {
+package model
 
-    String pais
+class Vaga {
+
+    Long id
+    String titulo
+    String descricao
+    String localidade
+    BigDecimal salario
+    Empresa empresa
     List<Competencia> competencias = []
 
-    Empresa() {
-        super()
+    Vaga() {
     }
 
-    Empresa(
-            String nome,
-            String email,
-            String documento,
-            String estado,
-            String cep,
+    Vaga(
+            String titulo,
             String descricao,
-            String pais,
+            String localidade,
+            BigDecimal salario,
+            Empresa empresa,
             List<Competencia> competencias = []
     ) {
-        super(nome, email, documento, estado, cep, descricao)
-        this.pais = pais
+        this.titulo = titulo
+        this.descricao = descricao
+        this.localidade = localidade
+        this.salario = salario
+        this.empresa = empresa
         this.competencias = competencias ?: []
     }
 
@@ -35,8 +42,11 @@ class Empresa extends Pessoa {
     @Override
     String toString() {
         return """
-${super.toString()}
-País: ${pais}
+Vaga: ${titulo}
+Descrição: ${descricao}
+Localidade: ${localidade}
+Salário: ${salario}
+Empresa: ${empresa?.nome}
 Competências: ${competencias.join(', ')}
 """
     }

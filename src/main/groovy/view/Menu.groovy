@@ -1,14 +1,35 @@
+package view
 
-import java.util.Scanner
+/*
+ * Autora: Liz Soares
+ * Projeto: Linketinder
+ */
+
+import controller.CandidatoController
+import controller.EmpresaController
+import controller.VagaController
+import controller.CompetenciaController
 
 class Menu {
 
     private final Scanner scanner
-    private final BancoDeDados bancoDeDados
+    private final CandidatoController candidatoController
+    private final EmpresaController empresaController
+    private final VagaController vagaController
+    private final CompetenciaController competenciaController
 
-    Menu(Scanner scanner, BancoDeDados bancoDeDados) {
+    Menu(
+            Scanner scanner,
+            CandidatoController candidatoController,
+            EmpresaController empresaController,
+            VagaController vagaController,
+            CompetenciaController competenciaController
+    ) {
         this.scanner = scanner
-        this.bancoDeDados = bancoDeDados
+        this.candidatoController = candidatoController
+        this.empresaController = empresaController
+        this.vagaController = vagaController
+        this.competenciaController = competenciaController
     }
 
     void executar() {
@@ -98,7 +119,7 @@ class Menu {
     private void listarCandidatos() {
         println "\n========== CANDIDATOS =========="
 
-        List<Map> candidatos = bancoDeDados.listarCandidatos()
+        List<Map> candidatos = candidatoController.listar()
 
         if (!candidatos) {
             println "Nenhum candidato cadastrado."
@@ -138,7 +159,7 @@ Competências: ${candidato.competencias}
 
         List<String> competencias = lerCompetencias()
 
-        Long id = bancoDeDados.criarCandidato(candidato, competencias)
+        Long id = candidatoController.cadastrar(candidato, competencias)
 
         println "\nCandidato cadastrado com sucesso! ID: ${id}"
     }
@@ -147,7 +168,7 @@ Competências: ${candidato.competencias}
         println "\n========== ATUALIZAR CANDIDATO =========="
 
         Long id = lerLong("ID do candidato: ")
-        Map existente = bancoDeDados.buscarCandidato(id)
+        Map existente = candidatoController.buscarPorId(id)
 
         if (!existente) {
             println "Candidato não encontrado."
@@ -174,8 +195,11 @@ Competências: ${candidato.competencias}
                 converterCompetencias(entradaCompetencias) :
                 converterCompetenciasExistentes(existente.competencias)
 
-        boolean atualizado =
-                bancoDeDados.atualizarCandidato(id, candidato, competencias)
+        boolean atualizado = candidatoController.atualizar(
+                id,
+                candidato,
+                competencias
+        )
 
         println atualizado ?
                 "Candidato atualizado com sucesso." :
@@ -186,7 +210,7 @@ Competências: ${candidato.competencias}
         println "\n========== EXCLUIR CANDIDATO =========="
 
         Long id = lerLong("ID do candidato: ")
-        Map candidato = bancoDeDados.buscarCandidato(id)
+        Map candidato = candidatoController.buscarPorId(id)
 
         if (!candidato) {
             println "Candidato não encontrado."
@@ -200,7 +224,7 @@ Competências: ${candidato.competencias}
             return
         }
 
-        boolean excluido = bancoDeDados.excluirCandidato(id)
+        boolean excluido = candidatoController.excluir(id)
 
         println excluido ?
                 "Candidato excluído com sucesso." :
@@ -212,7 +236,7 @@ Competências: ${candidato.competencias}
     private void listarEmpresas() {
         println "\n========== EMPRESAS =========="
 
-        List<Map> empresas = bancoDeDados.listarEmpresas()
+        List<Map> empresas = empresaController.listar()
 
         if (!empresas) {
             println "Nenhuma empresa cadastrada."
@@ -245,7 +269,7 @@ Descrição: ${empresa.descricao}
                 cep      : lerTexto("CEP: ")
         ]
 
-        Long id = bancoDeDados.criarEmpresa(empresa)
+        Long id = empresaController.cadastrar(empresa)
 
         println "\nEmpresa cadastrada com sucesso! ID: ${id}"
     }
@@ -254,7 +278,7 @@ Descrição: ${empresa.descricao}
         println "\n========== ATUALIZAR EMPRESA =========="
 
         Long id = lerLong("ID da empresa: ")
-        Map existente = bancoDeDados.buscarEmpresa(id)
+        Map existente = empresaController.buscarPorId(id)
 
         if (!existente) {
             println "Empresa não encontrada."
@@ -270,7 +294,7 @@ Descrição: ${empresa.descricao}
                 cep      : lerTextoAtualizavel("CEP", existente.cep)
         ]
 
-        boolean atualizado = bancoDeDados.atualizarEmpresa(id, empresa)
+        boolean atualizado = empresaController.atualizar(id, empresa)
 
         println atualizado ?
                 "Empresa atualizada com sucesso." :
@@ -281,7 +305,7 @@ Descrição: ${empresa.descricao}
         println "\n========== EXCLUIR EMPRESA =========="
 
         Long id = lerLong("ID da empresa: ")
-        Map empresa = bancoDeDados.buscarEmpresa(id)
+        Map empresa = empresaController.buscarPorId(id)
 
         if (!empresa) {
             println "Empresa não encontrada."
@@ -295,7 +319,7 @@ Descrição: ${empresa.descricao}
             return
         }
 
-        boolean excluida = bancoDeDados.excluirEmpresa(id)
+        boolean excluida = empresaController.excluir(id)
 
         println excluida ?
                 "Empresa excluída com sucesso." :
@@ -307,7 +331,7 @@ Descrição: ${empresa.descricao}
     private void listarVagas() {
         println "\n========== VAGAS =========="
 
-        List<Map> vagas = bancoDeDados.listarVagas()
+        List<Map> vagas = vagaController.listar()
 
         if (!vagas) {
             println "Nenhuma vaga cadastrada."
@@ -334,7 +358,7 @@ Competências: ${vaga.competencias}
         println "\n========== CADASTRAR VAGA =========="
 
         Long empresaId = lerLong("ID da empresa responsável: ")
-        Map empresa = bancoDeDados.buscarEmpresa(empresaId)
+        Map empresa = empresaController.buscarPorId(empresaId)
 
         if (!empresa) {
             println "Empresa não encontrada."
@@ -352,7 +376,7 @@ Competências: ${vaga.competencias}
 
         List<String> competencias = lerCompetencias()
 
-        Long id = bancoDeDados.criarVaga(vaga, competencias)
+        Long id = vagaController.cadastrar(vaga, competencias)
 
         println "\nVaga cadastrada com sucesso! ID: ${id}"
     }
@@ -361,7 +385,7 @@ Competências: ${vaga.competencias}
         println "\n========== ATUALIZAR VAGA =========="
 
         Long id = lerLong("ID da vaga: ")
-        Map existente = bancoDeDados.buscarVaga(id)
+        Map existente = vagaController.buscarPorId(id)
 
         if (!existente) {
             println "Vaga não encontrada."
@@ -373,7 +397,7 @@ Competências: ${vaga.competencias}
                 existente.empresa_id
         )
 
-        Map empresa = bancoDeDados.buscarEmpresa(empresaId)
+        Map empresa = empresaController.buscarPorId(empresaId)
 
         if (!empresa) {
             println "Empresa não encontrada."
@@ -398,8 +422,11 @@ Competências: ${vaga.competencias}
                 converterCompetencias(entradaCompetencias) :
                 converterCompetenciasExistentes(existente.competencias)
 
-        boolean atualizado =
-                bancoDeDados.atualizarVaga(id, vaga, competencias)
+        boolean atualizado = vagaController.atualizar(
+                id,
+                vaga,
+                competencias
+        )
 
         println atualizado ?
                 "Vaga atualizada com sucesso." :
@@ -410,7 +437,7 @@ Competências: ${vaga.competencias}
         println "\n========== EXCLUIR VAGA =========="
 
         Long id = lerLong("ID da vaga: ")
-        Map vaga = bancoDeDados.buscarVaga(id)
+        Map vaga = vagaController.buscarPorId(id)
 
         if (!vaga) {
             println "Vaga não encontrada."
@@ -424,7 +451,7 @@ Competências: ${vaga.competencias}
             return
         }
 
-        boolean excluida = bancoDeDados.excluirVaga(id)
+        boolean excluida = vagaController.excluir(id)
 
         println excluida ?
                 "Vaga excluída com sucesso." :
@@ -436,7 +463,7 @@ Competências: ${vaga.competencias}
     private void listarCompetencias() {
         println "\n========== COMPETÊNCIAS =========="
 
-        List<Map> competencias = bancoDeDados.listarCompetencias()
+        List<Map> competencias = competenciaController.listar()
 
         if (!competencias) {
             println "Nenhuma competência cadastrada."
@@ -457,7 +484,7 @@ Nome: ${competencia.nome}
 
         String nome = lerTexto("Nome da competência: ")
 
-        Long id = bancoDeDados.criarCompetencia(nome)
+        Long id = competenciaController.cadastrar(nome)
 
         println "\nCompetência cadastrada com sucesso! ID: ${id}"
     }
@@ -466,7 +493,7 @@ Nome: ${competencia.nome}
         println "\n========== ATUALIZAR COMPETÊNCIA =========="
 
         Long id = lerLong("ID da competência: ")
-        Map existente = bancoDeDados.buscarCompetencia(id)
+        Map existente = competenciaController.buscarPorId(id)
 
         if (!existente) {
             println "Competência não encontrada."
@@ -475,7 +502,7 @@ Nome: ${competencia.nome}
 
         String nome = lerTextoAtualizavel("Nome", existente.nome)
 
-        boolean atualizado = bancoDeDados.atualizarCompetencia(id, nome)
+        boolean atualizado = competenciaController.atualizar(id, nome)
 
         println atualizado ?
                 "Competência atualizada com sucesso." :
@@ -486,7 +513,7 @@ Nome: ${competencia.nome}
         println "\n========== EXCLUIR COMPETÊNCIA =========="
 
         Long id = lerLong("ID da competência: ")
-        Map competencia = bancoDeDados.buscarCompetencia(id)
+        Map competencia = competenciaController.buscarPorId(id)
 
         if (!competencia) {
             println "Competência não encontrada."
@@ -500,7 +527,7 @@ Nome: ${competencia.nome}
             return
         }
 
-        boolean excluida = bancoDeDados.excluirCompetencia(id)
+        boolean excluida = competenciaController.excluir(id)
 
         println excluida ?
                 "Competência excluída com sucesso." :
