@@ -4,8 +4,8 @@
  * Projeto: Linketinder
  */
 
-import java.util.Scanner
 
+import view.Menu
 import database.ConnectionFactory
 import database.ConnectionProvider
 
@@ -14,18 +14,26 @@ import repository.EmpresaRepository
 import repository.VagaRepository
 import repository.CompetenciaRepository
 
+import service.CandidatoService
+import service.EmpresaService
+import service.VagaService
+import service.CompetenciaService
+
+import controller.CandidatoController
+import controller.EmpresaController
+import controller.VagaController
+import controller.CompetenciaController
+
 class Main {
 
     static void main(String[] args) {
-
         Scanner scanner = new Scanner(System.in)
 
         try {
             iniciarAplicacao(scanner)
-
         } catch (Exception e) {
             println "Erro ao iniciar o Linketinder: ${e.message}"
-
+            e.printStackTrace()
         } finally {
             scanner.close()
         }
@@ -33,14 +41,10 @@ class Main {
 
     private static void iniciarAplicacao(Scanner scanner) {
 
-        // Criação do provedor de conexão utilizando Factory
-        ConnectionFactory fabrica =
-                ConnectionFactory.getInstancia()
+        ConnectionFactory fabrica = ConnectionFactory.getInstancia()
+        ConnectionProvider conexaoBanco = fabrica.criar('postgresql')
 
-        ConnectionProvider conexaoBanco =
-                fabrica.criar('postgresql')
-
-        // Repositórios
+        // REPOSITORIES
         CandidatoRepository candidatoRepository =
                 new CandidatoRepository(conexaoBanco)
 
@@ -53,16 +57,41 @@ class Main {
         CompetenciaRepository competenciaRepository =
                 new CompetenciaRepository(conexaoBanco)
 
-        // Fachada de acesso aos dados
-        BancoDeDados bancoDeDados = new BancoDeDados(
-                candidatoRepository,
-                empresaRepository,
-                vagaRepository,
-                competenciaRepository
+        // SERVICES
+        CandidatoService candidatoService =
+                new CandidatoService(candidatoRepository)
+
+        EmpresaService empresaService =
+                new EmpresaService(empresaRepository)
+
+        VagaService vagaService =
+                new VagaService(vagaRepository)
+
+        CompetenciaService competenciaService =
+                new CompetenciaService(competenciaRepository)
+
+        // CONTROLLERS
+        CandidatoController candidatoController =
+                new CandidatoController(candidatoService)
+
+        EmpresaController empresaController =
+                new EmpresaController(empresaService)
+
+        VagaController vagaController =
+                new VagaController(vagaService)
+
+        CompetenciaController competenciaController =
+                new CompetenciaController(competenciaService)
+
+        // VIEW
+        Menu menu = new Menu(
+                scanner,
+                candidatoController,
+                empresaController,
+                vagaController,
+                competenciaController
         )
 
-        // Interface com o usuário
-        Menu menu = new Menu(scanner, bancoDeDados)
         menu.executar()
     }
 }

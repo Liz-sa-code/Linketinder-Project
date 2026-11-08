@@ -1,3 +1,5 @@
+package model
+
 class Competencia {
 
     Long id

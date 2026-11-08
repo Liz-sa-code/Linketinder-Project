@@ -1,24 +1,26 @@
-class Candidato extends Pessoa {
+package model
 
-    Integer idade
+class Empresa extends Pessoa {
+
+    String pais
     List<Competencia> competencias = []
 
-    Candidato() {
+    Empresa() {
         super()
     }
 
-    Candidato(
+    Empresa(
             String nome,
             String email,
             String documento,
             String estado,
             String cep,
             String descricao,
-            Integer idade,
+            String pais,
             List<Competencia> competencias = []
     ) {
         super(nome, email, documento, estado, cep, descricao)
-        this.idade = idade
+        this.pais = pais
         this.competencias = competencias ?: []
     }
 
@@ -36,7 +38,7 @@ class Candidato extends Pessoa {
     String toString() {
         return """
 ${super.toString()}
-Idade: ${idade}
+País: ${pais}
 Competências: ${competencias.join(', ')}
 """
     }
