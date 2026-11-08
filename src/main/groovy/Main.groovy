@@ -6,7 +6,8 @@
 
 import java.util.Scanner
 
-import database.ConexaoBanco
+import database.ConnectionFactory
+import database.ConnectionProvider
 
 import repository.CandidatoRepository
 import repository.EmpresaRepository
@@ -32,8 +33,12 @@ class Main {
 
     private static void iniciarAplicacao(Scanner scanner) {
 
-        // Provedor de conexão
-        ConexaoBanco conexaoBanco = new ConexaoBanco()
+        // Criação do provedor de conexão utilizando Factory
+        ConnectionFactory fabrica =
+                ConnectionFactory.getInstancia()
+
+        ConnectionProvider conexaoBanco =
+                fabrica.criar('postgresql')
 
         // Repositórios
         CandidatoRepository candidatoRepository =
