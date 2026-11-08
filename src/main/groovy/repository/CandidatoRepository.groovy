@@ -1,29 +1,23 @@
+
 package repository
 
+import database.ConnectionProvider
+
 import java.sql.Connection
-import java.sql.DriverManager
 import java.sql.PreparedStatement
-import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 import java.sql.Date
 
-class CandidatoRepository {
+class CandidatoRepository implements CandidatoInterfaceRepository {
 
-    private Connection conectar() {
-        String url = System.getenv('DB_URL')
-        String usuario = System.getenv('DB_USER')
-        String senha = System.getenv('DB_PASSWORD')
+    private final ConnectionProvider connectionProvider
 
-        if (!url || !usuario || !senha) {
-            throw new IllegalStateException(
-                    'Configure as variáveis DB_URL, DB_USER e DB_PASSWORD.'
-            )
-        }
-
-        return DriverManager.getConnection(url, usuario, senha)
+    CandidatoRepository(ConnectionProvider connectionProvider) {
+        this.connectionProvider = Objects.requireNonNull(connectionProvider)
     }
 
+    @Override
     List<Map> listarCandidatos() {
         String sql = '''
             SELECT
@@ -61,43 +55,35 @@ class CandidatoRepository {
             ORDER BY c.id
         '''
 
-        Connection conexao = conectar()
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.executeQuery().withCloseable { rs ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            ResultSet rs = stmt.executeQuery()
+                    List<Map> candidatos = []
 
-            List<Map> candidatos = []
+                    while (rs.next()) {
+                        candidatos.add([
+                                id              : rs.getLong('id'),
+                                nome            : rs.getString('nome'),
+                                sobrenome       : rs.getString('sobrenome'),
+                                data_nascimento : rs.getDate('data_nascimento'),
+                                idade           : rs.getInt('idade'),
+                                email           : rs.getString('email'),
+                                cpf             : rs.getString('cpf'),
+                                pais            : rs.getString('pais'),
+                                cep             : rs.getString('cep'),
+                                descricao       : rs.getString('descricao'),
+                                competencias    : rs.getString('competencias')
+                        ])
+                    }
 
-            while (rs.next()) {
-                candidatos.add([
-                        id              : rs.getLong('id'),
-                        nome            : rs.getString('nome'),
-                        sobrenome       : rs.getString('sobrenome'),
-                        data_nascimento : rs.getDate('data_nascimento'),
-                        idade           : rs.getInt('idade'),
-                        email           : rs.getString('email'),
-                        cpf             : rs.getString('cpf'),
-                        pais            : rs.getString('pais'),
-                        cep             : rs.getString('cep'),
-                        descricao       : rs.getString('descricao'),
-                        competencias    : rs.getString('competencias')
-                ])
+                    return candidatos
+                }
             }
-
-            rs.close()
-            stmt.close()
-
-            return candidatos
-
-        } finally {
-            conexao.close()
         }
     }
 
-    /**
-     * Busca um candidato pelo ID.
-     */
+    @Override
     Map buscarPorId(Long id) {
         String sql = '''
             SELECT
@@ -112,46 +98,50 @@ class CandidatoRepository {
                 c.cpf,
                 c.pais,
                 c.cep,
-                c.descricao
+                c.descricao,
+                COALESCE(
+                    STRING_AGG(comp.nome, ', ' ORDER BY comp.nome),
+                    ''
+                ) AS competencias
             FROM candidatos c
+            LEFT JOIN candidato_competencia cc
+                ON cc.candidato_id = c.id
+            LEFT JOIN competencias comp
+                ON comp.id = cc.competencia_id
             WHERE c.id = ?
+            GROUP BY c.id
         '''
 
-        Connection conexao = conectar()
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            stmt.setLong(1, id)
+                stmt.setLong(1, id)
 
-            ResultSet rs = stmt.executeQuery()
+                stmt.executeQuery().withCloseable { rs ->
 
-            if (!rs.next()) {
-                return null
+                    if (!rs.next()) {
+                        return null
+                    }
+
+                    return [
+                            id              : rs.getLong('id'),
+                            nome            : rs.getString('nome'),
+                            sobrenome       : rs.getString('sobrenome'),
+                            data_nascimento : rs.getDate('data_nascimento'),
+                            idade           : rs.getInt('idade'),
+                            email           : rs.getString('email'),
+                            cpf             : rs.getString('cpf'),
+                            pais            : rs.getString('pais'),
+                            cep             : rs.getString('cep'),
+                            descricao       : rs.getString('descricao'),
+                            competencias    : rs.getString('competencias')
+                    ]
+                }
             }
-
-            Map candidato = [
-                    id              : rs.getLong('id'),
-                    nome            : rs.getString('nome'),
-                    sobrenome       : rs.getString('sobrenome'),
-                    data_nascimento : rs.getDate('data_nascimento'),
-                    idade           : rs.getInt('idade'),
-                    email           : rs.getString('email'),
-                    cpf             : rs.getString('cpf'),
-                    pais            : rs.getString('pais'),
-                    cep             : rs.getString('cep'),
-                    descricao       : rs.getString('descricao')
-            ]
-
-            rs.close()
-            stmt.close()
-
-            return candidato
-
-        } finally {
-            conexao.close()
         }
     }
 
+    @Override
     Long criar(Map dados, List<String> competencias) {
         String sql = '''
             INSERT INTO candidatos (
@@ -162,44 +152,38 @@ class CandidatoRepository {
                 cpf,
                 pais,
                 cep,
-                descricao,
-                senha_hash
+                descricao
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         '''
 
-        Connection conexao = conectar()
+        Connection conexao = connectionProvider.conectar()
 
         try {
             conexao.autoCommit = false
 
-            PreparedStatement stmt = conexao.prepareStatement(
+            Long candidatoId
+
+            conexao.prepareStatement(
                     sql,
                     Statement.RETURN_GENERATED_KEYS
-            )
+            ).withCloseable { stmt ->
 
-            stmt.setString(1, dados.nome)
-            stmt.setString(2, dados.sobrenome)
-            stmt.setDate(3, converterData(dados.data_nascimento ?: dados.dataNascimento))
-            stmt.setString(4, dados.email)
-            stmt.setString(5, dados.cpf)
-            stmt.setString(6, dados.pais)
-            stmt.setString(7, dados.cep)
-            stmt.setString(8, dados.descricao)
-            stmt.setString(9, dados.senha_hash ?: dados.senhaHash)
+                preencherDados(stmt, dados)
 
-            stmt.executeUpdate()
+                stmt.executeUpdate()
 
-            ResultSet chaves = stmt.generatedKeys
+                stmt.generatedKeys.withCloseable { chaves ->
 
-            if (!chaves.next()) {
-                throw new SQLException('Não foi possível obter o ID do candidato.')
+                    if (!chaves.next()) {
+                        throw new SQLException(
+                                'Não foi possível obter o ID do candidato.'
+                        )
+                    }
+
+                    candidatoId = chaves.getLong(1)
+                }
             }
-
-            Long candidatoId = chaves.getLong(1)
-
-            chaves.close()
-            stmt.close()
 
             associarCompetencias(conexao, candidatoId, competencias)
 
@@ -216,7 +200,12 @@ class CandidatoRepository {
         }
     }
 
-    boolean atualizar(Long id, Map dados, List<String> competencias) {
+    @Override
+    boolean atualizar(
+            Long id,
+            Map dados,
+            List<String> competencias
+    ) {
         String sql = '''
             UPDATE candidatos
             SET
@@ -231,25 +220,20 @@ class CandidatoRepository {
             WHERE id = ?
         '''
 
-        Connection conexao = conectar()
+        Connection conexao = connectionProvider.conectar()
 
         try {
             conexao.autoCommit = false
 
-            PreparedStatement stmt = conexao.prepareStatement(sql)
+            int linhasAfetadas
 
-            stmt.setString(1, dados.nome)
-            stmt.setString(2, dados.sobrenome)
-            stmt.setDate(3, converterData(dados.data_nascimento ?: dados.dataNascimento))
-            stmt.setString(4, dados.email)
-            stmt.setString(5, dados.cpf)
-            stmt.setString(6, dados.pais)
-            stmt.setString(7, dados.cep)
-            stmt.setString(8, dados.descricao)
-            stmt.setLong(9, id)
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-            int linhasAfetadas = stmt.executeUpdate()
-            stmt.close()
+                preencherDados(stmt, dados)
+                stmt.setLong(9, id)
+
+                linhasAfetadas = stmt.executeUpdate()
+            }
 
             if (linhasAfetadas == 0) {
                 conexao.rollback()
@@ -272,26 +256,19 @@ class CandidatoRepository {
         }
     }
 
+    @Override
     boolean excluir(Long id) {
         String sql = 'DELETE FROM candidatos WHERE id = ?'
 
-        Connection conexao = conectar()
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            stmt.setLong(1, id)
+                stmt.setLong(1, id)
 
-            int linhasAfetadas = stmt.executeUpdate()
-
-            stmt.close()
-
-            return linhasAfetadas > 0
-
-        } finally {
-            conexao.close()
+                return stmt.executeUpdate() > 0
+            }
         }
     }
-
 
     private void associarCompetencias(
             Connection conexao,
@@ -313,21 +290,18 @@ class CandidatoRepository {
             ON CONFLICT DO NOTHING
         '''
 
-        PreparedStatement stmt = conexao.prepareStatement(sql)
+        conexao.prepareStatement(sql).withCloseable { stmt ->
 
-        competencias.each { String competencia ->
-            stmt.setLong(1, candidatoId)
-            stmt.setString(2, competencia)
-            stmt.addBatch()
+            competencias.each { String competencia ->
+                stmt.setLong(1, candidatoId)
+                stmt.setString(2, competencia)
+                stmt.addBatch()
+            }
+
+            stmt.executeBatch()
         }
-
-        stmt.executeBatch()
-        stmt.close()
     }
 
-    /**
-     * Remove as competências associadas ao candidato.
-     */
     private void removerCompetencias(
             Connection conexao,
             Long candidatoId
@@ -337,10 +311,29 @@ class CandidatoRepository {
             WHERE candidato_id = ?
         '''
 
-        PreparedStatement stmt = conexao.prepareStatement(sql)
-        stmt.setLong(1, candidatoId)
-        stmt.executeUpdate()
-        stmt.close()
+        conexao.prepareStatement(sql).withCloseable { stmt ->
+            stmt.setLong(1, candidatoId)
+            stmt.executeUpdate()
+        }
+    }
+
+    private void preencherDados(
+            PreparedStatement stmt,
+            Map dados
+    ) {
+        stmt.setString(1, dados.nome)
+        stmt.setString(2, dados.sobrenome)
+
+        stmt.setDate(
+                3,
+                converterData(dados.data_nascimento ?: dados.dataNascimento)
+        )
+
+        stmt.setString(4, dados.email)
+        stmt.setString(5, dados.cpf)
+        stmt.setString(6, dados.pais)
+        stmt.setString(7, dados.cep)
+        stmt.setString(8, dados.descricao)
     }
 
     private Date converterData(def data) {

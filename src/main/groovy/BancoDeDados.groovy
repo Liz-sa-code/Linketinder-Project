@@ -1,26 +1,30 @@
-
-import repository.CandidatoRepository
-import repository.EmpresaRepository
-import repository.VagaRepository
-import repository.CompetenciaRepository
+import repository.CandidatoInterfaceRepository
+import repository.EmpresaRepositoryInterface
+import repository.VagaRepositoryInterface
+import repository.CompetenciaRepositoryInterface
 
 class BancoDeDados {
 
-    private final CandidatoRepository candidatoRepository
-    private final EmpresaRepository empresaRepository
-    private final VagaRepository vagaRepository
-    private final CompetenciaRepository competenciaRepository
+    private final CandidatoInterfaceRepository candidatoRepository
+    private final EmpresaRepositoryInterface empresaRepository
+    private final VagaRepositoryInterface vagaRepository
+    private final CompetenciaRepositoryInterface competenciaRepository
 
-    BancoDeDados() {
-        this.candidatoRepository = new CandidatoRepository()
-        this.empresaRepository = new EmpresaRepository()
-        this.vagaRepository = new VagaRepository()
-        this.competenciaRepository = new CompetenciaRepository()
+    BancoDeDados(
+            CandidatoInterfaceRepository candidatoRepository,
+            EmpresaRepositoryInterface empresaRepository,
+            VagaRepositoryInterface vagaRepository,
+            CompetenciaRepositoryInterface competenciaRepository
+    ) {
+        this.candidatoRepository = Objects.requireNonNull(candidatoRepository)
+        this.empresaRepository = Objects.requireNonNull(empresaRepository)
+        this.vagaRepository = Objects.requireNonNull(vagaRepository)
+        this.competenciaRepository = Objects.requireNonNull(competenciaRepository)
     }
 
     // CANDIDATOS
 
-    long criarCandidato(Map candidato, List<String> competencias = []) {
+    Long criarCandidato(Map candidato, List<String> competencias = []) {
         return candidatoRepository.criar(candidato, competencias)
     }
 
@@ -28,25 +32,25 @@ class BancoDeDados {
         return candidatoRepository.listarCandidatos()
     }
 
-    Map buscarCandidato(long id) {
+    Map buscarCandidato(Long id) {
         return candidatoRepository.buscarPorId(id)
     }
 
     boolean atualizarCandidato(
-            long id,
+            Long id,
             Map candidato,
             List<String> competencias = []
     ) {
         return candidatoRepository.atualizar(id, candidato, competencias)
     }
 
-    boolean excluirCandidato(long id) {
+    boolean excluirCandidato(Long id) {
         return candidatoRepository.excluir(id)
     }
 
     // EMPRESAS
 
-    long criarEmpresa(Map empresa) {
+    Long criarEmpresa(Map empresa) {
         return empresaRepository.criar(empresa)
     }
 
@@ -54,21 +58,21 @@ class BancoDeDados {
         return empresaRepository.listar()
     }
 
-    Map buscarEmpresa(long id) {
+    Map buscarEmpresa(Long id) {
         return empresaRepository.buscarPorId(id)
     }
 
-    boolean atualizarEmpresa(long id, Map empresa) {
+    boolean atualizarEmpresa(Long id, Map empresa) {
         return empresaRepository.atualizar(id, empresa)
     }
 
-    boolean excluirEmpresa(long id) {
+    boolean excluirEmpresa(Long id) {
         return empresaRepository.excluir(id)
     }
 
     // VAGAS
 
-    long criarVaga(Map vaga, List<String> competencias = []) {
+    Long criarVaga(Map vaga, List<String> competencias = []) {
         return vagaRepository.criar(vaga, competencias)
     }
 
@@ -76,25 +80,25 @@ class BancoDeDados {
         return vagaRepository.listar()
     }
 
-    Map buscarVaga(long id) {
+    Map buscarVaga(Long id) {
         return vagaRepository.buscarPorId(id)
     }
 
     boolean atualizarVaga(
-            long id,
+            Long id,
             Map vaga,
             List<String> competencias = []
     ) {
         return vagaRepository.atualizar(id, vaga, competencias)
     }
 
-    boolean excluirVaga(long id) {
+    boolean excluirVaga(Long id) {
         return vagaRepository.excluir(id)
     }
 
     // COMPETÊNCIAS
 
-    long criarCompetencia(String nome) {
+    Long criarCompetencia(String nome) {
         return competenciaRepository.criar(nome)
     }
 
@@ -102,11 +106,15 @@ class BancoDeDados {
         return competenciaRepository.listar()
     }
 
-    boolean atualizarCompetencia(long id, String nome) {
+    Map buscarCompetencia(Long id) {
+        return competenciaRepository.buscarPorId(id)
+    }
+
+    boolean atualizarCompetencia(Long id, String nome) {
         return competenciaRepository.atualizar(id, nome)
     }
 
-    boolean excluirCompetencia(long id) {
+    boolean excluirCompetencia(Long id) {
         return competenciaRepository.excluir(id)
     }
 }

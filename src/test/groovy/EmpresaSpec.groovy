@@ -1,3 +1,4 @@
+
 import spock.lang.Specification
 
 class EmpresaSpec extends Specification {
@@ -5,15 +6,21 @@ class EmpresaSpec extends Specification {
     def "deve criar uma empresa corretamente"() {
 
         given:
+        def competencias = [
+                new Competencia("Java"),
+                new Competencia("Python"),
+                new Competencia("SQL")
+        ]
+
         def empresa = new Empresa(
                 "InovaTech",
                 "contato@inovatech.com",
                 "98.765.432/0001-10",
-                "Brasil",
                 "RJ",
                 "20000-000",
                 "Empresa especializada em desenvolvimento de sistemas",
-                ["Java", "Python", "SQL"]
+                "Brasil",
+                competencias
         )
 
         expect:
@@ -24,7 +31,6 @@ class EmpresaSpec extends Specification {
         empresa.estado == "RJ"
         empresa.cep == "20000-000"
         empresa.descricao == "Empresa especializada em desenvolvimento de sistemas"
-        empresa.competencias == ["Java", "Python", "SQL"]
+        empresa.competencias*.nome == ["Java", "Python", "SQL"]
     }
 }
-

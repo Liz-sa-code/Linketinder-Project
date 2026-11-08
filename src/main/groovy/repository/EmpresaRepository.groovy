@@ -1,17 +1,20 @@
 
 package repository
 
-import database.ConexaoBanco
+import database.ConnectionProvider
 
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.SQLException
 import java.sql.Statement
+import java.sql.SQLException
 
-class EmpresaRepository {
+class EmpresaRepository implements EmpresaRepositoryInterface {
 
+    private final ConnectionProvider connectionProvider
 
+    EmpresaRepository(ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider
+    }
+
+    @Override
     List<Map> listar() {
         String sql = '''
             SELECT
@@ -26,35 +29,31 @@ class EmpresaRepository {
             ORDER BY id
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.executeQuery().withCloseable { rs ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            ResultSet rs = stmt.executeQuery()
+                    List<Map> empresas = []
 
-            List<Map> empresas = []
+                    while (rs.next()) {
+                        empresas.add([
+                                id        : rs.getLong('id'),
+                                nome      : rs.getString('nome'),
+                                cnpj      : rs.getString('cnpj'),
+                                email     : rs.getString('email'),
+                                descricao : rs.getString('descricao'),
+                                pais      : rs.getString('pais'),
+                                cep       : rs.getString('cep')
+                        ])
+                    }
 
-            while (rs.next()) {
-                empresas.add([
-                        id        : rs.getLong('id'),
-                        nome      : rs.getString('nome'),
-                        cnpj      : rs.getString('cnpj'),
-                        email     : rs.getString('email'),
-                        descricao : rs.getString('descricao'),
-                        pais      : rs.getString('pais'),
-                        cep       : rs.getString('cep')
-                ])
+                    return empresas
+                }
             }
-
-            rs.close()
-            stmt.close()
-
-            return empresas
-        } finally {
-            conexao.close()
         }
     }
 
+    @Override
     Map buscarPorId(Long id) {
         String sql = '''
             SELECT
@@ -69,39 +68,32 @@ class EmpresaRepository {
             WHERE id = ?
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            stmt.setLong(1, id)
+                stmt.setLong(1, id)
 
-            ResultSet rs = stmt.executeQuery()
+                stmt.executeQuery().withCloseable { rs ->
 
-            if (!rs.next()) {
-                rs.close()
-                stmt.close()
-                return null
+                    if (!rs.next()) {
+                        return null
+                    }
+
+                    return [
+                            id        : rs.getLong('id'),
+                            nome      : rs.getString('nome'),
+                            cnpj      : rs.getString('cnpj'),
+                            email     : rs.getString('email'),
+                            descricao : rs.getString('descricao'),
+                            pais      : rs.getString('pais'),
+                            cep       : rs.getString('cep')
+                    ]
+                }
             }
-
-            Map empresa = [
-                    id        : rs.getLong('id'),
-                    nome      : rs.getString('nome'),
-                    cnpj      : rs.getString('cnpj'),
-                    email     : rs.getString('email'),
-                    descricao : rs.getString('descricao'),
-                    pais      : rs.getString('pais'),
-                    cep       : rs.getString('cep')
-            ]
-
-            rs.close()
-            stmt.close()
-
-            return empresa
-        } finally {
-            conexao.close()
         }
     }
 
+    @Override
     Long criar(Map empresa) {
         String sql = '''
             INSERT INTO empresas (
@@ -110,52 +102,42 @@ class EmpresaRepository {
                 email,
                 descricao,
                 pais,
-                cep,
-                senha_hash
+                cep
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        return connectionProvider.conectar().withCloseable { conexao ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(
+            conexao.prepareStatement(
                     sql,
                     Statement.RETURN_GENERATED_KEYS
-            )
+            ).withCloseable { stmt ->
 
-            stmt.setString(1, empresa.nome)
-            stmt.setString(2, empresa.cnpj)
-            stmt.setString(3, empresa.email)
-            stmt.setString(4, empresa.descricao)
-            stmt.setString(5, empresa.pais)
-            stmt.setString(6, empresa.cep)
-            stmt.setString(
-                    7,
-                    empresa.senha_hash ?: empresa.senhaHash
-            )
+                stmt.setString(1, empresa.nome)
+                stmt.setString(2, empresa.cnpj)
+                stmt.setString(3, empresa.email)
+                stmt.setString(4, empresa.descricao)
+                stmt.setString(5, empresa.pais)
+                stmt.setString(6, empresa.cep)
 
-            stmt.executeUpdate()
+                stmt.executeUpdate()
 
-            ResultSet chaves = stmt.generatedKeys
+                stmt.generatedKeys.withCloseable { chaves ->
 
-            if (!chaves.next()) {
-                throw new SQLException(
-                        'Não foi possível obter o ID da empresa.'
-                )
+                    if (!chaves.next()) {
+                        throw new SQLException(
+                                'Não foi possível obter o ID da empresa.'
+                        )
+                    }
+
+                    return chaves.getLong(1)
+                }
             }
-
-            Long id = chaves.getLong(1)
-
-            chaves.close()
-            stmt.close()
-
-            return id
-        } finally {
-            conexao.close()
         }
     }
 
+    @Override
     boolean atualizar(Long id, Map empresa) {
         String sql = '''
             UPDATE empresas
@@ -169,48 +151,38 @@ class EmpresaRepository {
             WHERE id = ?
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        return connectionProvider.conectar().withCloseable { conexao ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-            stmt.setString(1, empresa.nome)
-            stmt.setString(2, empresa.cnpj)
-            stmt.setString(3, empresa.email)
-            stmt.setString(4, empresa.descricao)
-            stmt.setString(5, empresa.pais)
-            stmt.setString(6, empresa.cep)
-            stmt.setLong(7, id)
+                stmt.setString(1, empresa.nome)
+                stmt.setString(2, empresa.cnpj)
+                stmt.setString(3, empresa.email)
+                stmt.setString(4, empresa.descricao)
+                stmt.setString(5, empresa.pais)
+                stmt.setString(6, empresa.cep)
+                stmt.setLong(7, id)
 
-            int linhasAfetadas = stmt.executeUpdate()
-
-            stmt.close()
-
-            return linhasAfetadas > 0
-        } finally {
-            conexao.close()
+                return stmt.executeUpdate() > 0
+            }
         }
     }
 
+    @Override
     boolean excluir(Long id) {
         String sql = '''
             DELETE FROM empresas
             WHERE id = ?
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        return connectionProvider.conectar().withCloseable { conexao ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            stmt.setLong(1, id)
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-            int linhasAfetadas = stmt.executeUpdate()
+                stmt.setLong(1, id)
 
-            stmt.close()
-
-            return linhasAfetadas > 0
-        } finally {
-            conexao.close()
+                return stmt.executeUpdate() > 0
+            }
         }
     }
 }

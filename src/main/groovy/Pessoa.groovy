@@ -1,4 +1,4 @@
-class Pessoa implements PessoaInterface {
+abstract class Pessoa implements PessoaInterface {
 
     String nome
     String email
@@ -7,8 +7,7 @@ class Pessoa implements PessoaInterface {
     String cep
     String descricao
 
-    Pessoa() {
-    }
+    Pessoa() {}
 
     Pessoa(
             String nome,

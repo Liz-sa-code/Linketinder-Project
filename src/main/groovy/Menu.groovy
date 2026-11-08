@@ -16,76 +16,87 @@ class Menu {
 
         while (opcao != 0) {
             exibirMenu()
-            opcao = lerOpcao()
+            opcao = lerInteiro("Escolha uma opção: ")
 
-            if (opcao != 0) {
-                executarOpcao(opcao)
-                aguardarContinuacao()
+            if (opcao == 0) {
+                break
             }
+
+            try {
+                executarOpcao(opcao)
+            } catch (Exception e) {
+                println "\nNão foi possível executar a operação."
+                println "Detalhes: ${e.message}"
+            }
+
+            aguardarContinuacao()
         }
 
-        println "Encerrando o Linketinder..."
+        println "\nEncerrando o Linketinder..."
     }
 
     private void exibirMenu() {
         println """
-===== LINKETINDER =====
+========== LINKETINDER ==========
+
+--- CANDIDATOS ---
 1  - Listar candidatos
-2  - Listar empresas
-3  - Cadastrar candidato
-4  - Atualizar candidato
-5  - Excluir candidato
+2  - Cadastrar candidato
+3  - Atualizar candidato
+4  - Excluir candidato
+
+--- EMPRESAS ---
+5  - Listar empresas
 6  - Cadastrar empresa
 7  - Atualizar empresa
 8  - Excluir empresa
+
+--- VAGAS ---
 9  - Listar vagas
 10 - Cadastrar vaga
 11 - Atualizar vaga
 12 - Excluir vaga
+
+--- COMPETÊNCIAS ---
 13 - Listar competências
 14 - Cadastrar competência
 15 - Atualizar competência
 16 - Excluir competência
-0  - Sair
+
+0 - Sair
 """
-    }
-
-    private int lerOpcao() {
-        print "Escolha uma opção: "
-
-        try {
-            return Integer.parseInt(scanner.nextLine().trim())
-        } catch (NumberFormatException ignored) {
-            println "Digite um número válido."
-            return -1
-        }
     }
 
     private void executarOpcao(int opcao) {
         switch (opcao) {
-            case 1:
-                listarCandidatos()
-                break
+            case 1: listarCandidatos(); break
+            case 2: cadastrarCandidato(); break
+            case 3: atualizarCandidato(); break
+            case 4: excluirCandidato(); break
 
-            case 2:
-                listarEmpresas()
-                break
+            case 5: listarEmpresas(); break
+            case 6: cadastrarEmpresa(); break
+            case 7: atualizarEmpresa(); break
+            case 8: excluirEmpresa(); break
 
-            case 9:
-                listarVagas()
-                break
+            case 9: listarVagas(); break
+            case 10: cadastrarVaga(); break
+            case 11: atualizarVaga(); break
+            case 12: excluirVaga(); break
 
-            case 13:
-                listarCompetencias()
-                break
+            case 13: listarCompetencias(); break
+            case 14: cadastrarCompetencia(); break
+            case 15: atualizarCompetencia(); break
+            case 16: excluirCompetencia(); break
 
-            default:
-                println "Esta opção ainda não foi implementada."
+            default: println "Opção inválida."
         }
     }
 
+    // CANDIDATOS
+
     private void listarCandidatos() {
-        println "\n===== CANDIDATOS ====="
+        println "\n========== CANDIDATOS =========="
 
         List<Map> candidatos = bancoDeDados.listarCandidatos()
 
@@ -97,20 +108,109 @@ class Menu {
         candidatos.each { candidato ->
             println """
 ID: ${candidato.id}
-Nome: ${candidato.nome}
+Nome: ${candidato.nome} ${candidato.sobrenome}
+Data de nascimento: ${candidato.data_nascimento}
+Idade: ${candidato.idade}
 Email: ${candidato.email}
 CPF: ${candidato.cpf}
-Idade: ${candidato.idade}
-Estado: ${candidato.estado}
+País: ${candidato.pais}
 CEP: ${candidato.cep}
 Descrição: ${candidato.descricao}
-------------------------------
+Competências: ${candidato.competencias}
+--------------------------------
 """
         }
     }
 
+    private void cadastrarCandidato() {
+        println "\n========== CADASTRAR CANDIDATO =========="
+
+        Map candidato = [
+                nome           : lerTexto("Nome: "),
+                sobrenome      : lerTexto("Sobrenome: "),
+                data_nascimento: lerTexto("Data de nascimento (AAAA-MM-DD): "),
+                email          : lerTexto("Email: "),
+                cpf            : lerTexto("CPF: "),
+                pais           : lerTexto("País: "),
+                cep            : lerTexto("CEP: "),
+                descricao      : lerTexto("Descrição: ")
+        ]
+
+        List<String> competencias = lerCompetencias()
+
+        Long id = bancoDeDados.criarCandidato(candidato, competencias)
+
+        println "\nCandidato cadastrado com sucesso! ID: ${id}"
+    }
+
+    private void atualizarCandidato() {
+        println "\n========== ATUALIZAR CANDIDATO =========="
+
+        Long id = lerLong("ID do candidato: ")
+        Map existente = bancoDeDados.buscarCandidato(id)
+
+        if (!existente) {
+            println "Candidato não encontrado."
+            return
+        }
+
+        Map candidato = [
+                nome           : lerTextoAtualizavel("Nome", existente.nome),
+                sobrenome      : lerTextoAtualizavel("Sobrenome", existente.sobrenome),
+                data_nascimento: lerTextoAtualizavel("Data de nascimento", existente.data_nascimento),
+                email          : lerTextoAtualizavel("Email", existente.email),
+                cpf            : lerTextoAtualizavel("CPF", existente.cpf),
+                pais           : lerTextoAtualizavel("País", existente.pais),
+                cep            : lerTextoAtualizavel("CEP", existente.cep),
+                descricao      : lerTextoAtualizavel("Descrição", existente.descricao)
+        ]
+
+        println "Competências atuais: ${existente.competencias}"
+        println "Digite as novas competências ou pressione Enter para manter."
+
+        String entradaCompetencias = lerTexto("Competências: ")
+
+        List<String> competencias = entradaCompetencias ?
+                converterCompetencias(entradaCompetencias) :
+                converterCompetenciasExistentes(existente.competencias)
+
+        boolean atualizado =
+                bancoDeDados.atualizarCandidato(id, candidato, competencias)
+
+        println atualizado ?
+                "Candidato atualizado com sucesso." :
+                "Não foi possível atualizar o candidato."
+    }
+
+    private void excluirCandidato() {
+        println "\n========== EXCLUIR CANDIDATO =========="
+
+        Long id = lerLong("ID do candidato: ")
+        Map candidato = bancoDeDados.buscarCandidato(id)
+
+        if (!candidato) {
+            println "Candidato não encontrado."
+            return
+        }
+
+        println "Candidato: ${candidato.nome} ${candidato.sobrenome}"
+
+        if (!confirmar("Deseja realmente excluir?")) {
+            println "Operação cancelada."
+            return
+        }
+
+        boolean excluido = bancoDeDados.excluirCandidato(id)
+
+        println excluido ?
+                "Candidato excluído com sucesso." :
+                "Não foi possível excluir o candidato."
+    }
+
+    // EMPRESAS
+
     private void listarEmpresas() {
-        println "\n===== EMPRESAS ====="
+        println "\n========== EMPRESAS =========="
 
         List<Map> empresas = bancoDeDados.listarEmpresas()
 
@@ -123,18 +223,89 @@ Descrição: ${candidato.descricao}
             println """
 ID: ${empresa.id}
 Nome: ${empresa.nome}
-Email: ${empresa.email}
 CNPJ: ${empresa.cnpj}
-Estado: ${empresa.estado}
+Email: ${empresa.email}
+País: ${empresa.pais}
 CEP: ${empresa.cep}
 Descrição: ${empresa.descricao}
-------------------------------
+--------------------------------
 """
         }
     }
 
+    private void cadastrarEmpresa() {
+        println "\n========== CADASTRAR EMPRESA =========="
+
+        Map empresa = [
+                nome     : lerTexto("Nome: "),
+                cnpj     : lerTexto("CNPJ: "),
+                email    : lerTexto("Email: "),
+                descricao: lerTexto("Descrição: "),
+                pais     : lerTexto("País: "),
+                cep      : lerTexto("CEP: ")
+        ]
+
+        Long id = bancoDeDados.criarEmpresa(empresa)
+
+        println "\nEmpresa cadastrada com sucesso! ID: ${id}"
+    }
+
+    private void atualizarEmpresa() {
+        println "\n========== ATUALIZAR EMPRESA =========="
+
+        Long id = lerLong("ID da empresa: ")
+        Map existente = bancoDeDados.buscarEmpresa(id)
+
+        if (!existente) {
+            println "Empresa não encontrada."
+            return
+        }
+
+        Map empresa = [
+                nome     : lerTextoAtualizavel("Nome", existente.nome),
+                cnpj     : lerTextoAtualizavel("CNPJ", existente.cnpj),
+                email    : lerTextoAtualizavel("Email", existente.email),
+                descricao: lerTextoAtualizavel("Descrição", existente.descricao),
+                pais     : lerTextoAtualizavel("País", existente.pais),
+                cep      : lerTextoAtualizavel("CEP", existente.cep)
+        ]
+
+        boolean atualizado = bancoDeDados.atualizarEmpresa(id, empresa)
+
+        println atualizado ?
+                "Empresa atualizada com sucesso." :
+                "Não foi possível atualizar a empresa."
+    }
+
+    private void excluirEmpresa() {
+        println "\n========== EXCLUIR EMPRESA =========="
+
+        Long id = lerLong("ID da empresa: ")
+        Map empresa = bancoDeDados.buscarEmpresa(id)
+
+        if (!empresa) {
+            println "Empresa não encontrada."
+            return
+        }
+
+        println "Empresa: ${empresa.nome}"
+
+        if (!confirmar("Deseja realmente excluir?")) {
+            println "Operação cancelada."
+            return
+        }
+
+        boolean excluida = bancoDeDados.excluirEmpresa(id)
+
+        println excluida ?
+                "Empresa excluída com sucesso." :
+                "Não foi possível excluir a empresa."
+    }
+
+    // VAGAS
+
     private void listarVagas() {
-        println "\n===== VAGAS ====="
+        println "\n========== VAGAS =========="
 
         List<Map> vagas = bancoDeDados.listarVagas()
 
@@ -146,18 +317,124 @@ Descrição: ${empresa.descricao}
         vagas.each { vaga ->
             println """
 ID: ${vaga.id}
-Título: ${vaga.titulo}
+Nome: ${vaga.nome}
+Empresa: ${vaga.empresa}
+ID da empresa: ${vaga.empresa_id}
 Descrição: ${vaga.descricao}
-Localidade: ${vaga.localidade}
-Salário: ${vaga.salario}
-Empresa: ${vaga.empresa ?: vaga.id_empresa}
-------------------------------
+Cidade: ${vaga.cidade}
+Estado: ${vaga.estado}
+Ativa: ${vaga.ativa}
+Competências: ${vaga.competencias}
+--------------------------------
 """
         }
     }
 
+    private void cadastrarVaga() {
+        println "\n========== CADASTRAR VAGA =========="
+
+        Long empresaId = lerLong("ID da empresa responsável: ")
+        Map empresa = bancoDeDados.buscarEmpresa(empresaId)
+
+        if (!empresa) {
+            println "Empresa não encontrada."
+            return
+        }
+
+        Map vaga = [
+                empresa_id: empresaId,
+                nome      : lerTexto("Nome da vaga: "),
+                descricao : lerTexto("Descrição: "),
+                cidade    : lerTexto("Cidade: "),
+                estado    : lerTexto("Estado: "),
+                ativa     : lerBooleano("A vaga está ativa? (S/N): ")
+        ]
+
+        List<String> competencias = lerCompetencias()
+
+        Long id = bancoDeDados.criarVaga(vaga, competencias)
+
+        println "\nVaga cadastrada com sucesso! ID: ${id}"
+    }
+
+    private void atualizarVaga() {
+        println "\n========== ATUALIZAR VAGA =========="
+
+        Long id = lerLong("ID da vaga: ")
+        Map existente = bancoDeDados.buscarVaga(id)
+
+        if (!existente) {
+            println "Vaga não encontrada."
+            return
+        }
+
+        Long empresaId = lerLongAtualizavel(
+                "ID da empresa responsável",
+                existente.empresa_id
+        )
+
+        Map empresa = bancoDeDados.buscarEmpresa(empresaId)
+
+        if (!empresa) {
+            println "Empresa não encontrada."
+            return
+        }
+
+        Map vaga = [
+                empresa_id: empresaId,
+                nome      : lerTextoAtualizavel("Nome", existente.nome),
+                descricao : lerTextoAtualizavel("Descrição", existente.descricao),
+                cidade    : lerTextoAtualizavel("Cidade", existente.cidade),
+                estado    : lerTextoAtualizavel("Estado", existente.estado),
+                ativa     : lerBooleanoAtualizavel(existente.ativa)
+        ]
+
+        println "Competências atuais: ${existente.competencias}"
+        println "Digite as novas competências ou pressione Enter para manter."
+
+        String entradaCompetencias = lerTexto("Competências: ")
+
+        List<String> competencias = entradaCompetencias ?
+                converterCompetencias(entradaCompetencias) :
+                converterCompetenciasExistentes(existente.competencias)
+
+        boolean atualizado =
+                bancoDeDados.atualizarVaga(id, vaga, competencias)
+
+        println atualizado ?
+                "Vaga atualizada com sucesso." :
+                "Não foi possível atualizar a vaga."
+    }
+
+    private void excluirVaga() {
+        println "\n========== EXCLUIR VAGA =========="
+
+        Long id = lerLong("ID da vaga: ")
+        Map vaga = bancoDeDados.buscarVaga(id)
+
+        if (!vaga) {
+            println "Vaga não encontrada."
+            return
+        }
+
+        println "Vaga: ${vaga.nome}"
+
+        if (!confirmar("Deseja realmente excluir?")) {
+            println "Operação cancelada."
+            return
+        }
+
+        boolean excluida = bancoDeDados.excluirVaga(id)
+
+        println excluida ?
+                "Vaga excluída com sucesso." :
+                "Não foi possível excluir a vaga."
+    }
+
+    // COMPETÊNCIAS
+
     private void listarCompetencias() {
-        println "\n===== COMPETÊNCIAS ====="
+        println "\n========== COMPETÊNCIAS =========="
 
         List<Map> competencias = bancoDeDados.listarCompetencias()
 
@@ -170,8 +447,189 @@ Empresa: ${vaga.empresa ?: vaga.id_empresa}
             println """
 ID: ${competencia.id}
 Nome: ${competencia.nome}
-------------------------------
+--------------------------------
 """
+        }
+    }
+
+    private void cadastrarCompetencia() {
+        println "\n========== CADASTRAR COMPETÊNCIA =========="
+
+        String nome = lerTexto("Nome da competência: ")
+
+        Long id = bancoDeDados.criarCompetencia(nome)
+
+        println "\nCompetência cadastrada com sucesso! ID: ${id}"
+    }
+
+    private void atualizarCompetencia() {
+        println "\n========== ATUALIZAR COMPETÊNCIA =========="
+
+        Long id = lerLong("ID da competência: ")
+        Map existente = bancoDeDados.buscarCompetencia(id)
+
+        if (!existente) {
+            println "Competência não encontrada."
+            return
+        }
+
+        String nome = lerTextoAtualizavel("Nome", existente.nome)
+
+        boolean atualizado = bancoDeDados.atualizarCompetencia(id, nome)
+
+        println atualizado ?
+                "Competência atualizada com sucesso." :
+                "Não foi possível atualizar a competência."
+    }
+
+    private void excluirCompetencia() {
+        println "\n========== EXCLUIR COMPETÊNCIA =========="
+
+        Long id = lerLong("ID da competência: ")
+        Map competencia = bancoDeDados.buscarCompetencia(id)
+
+        if (!competencia) {
+            println "Competência não encontrada."
+            return
+        }
+
+        println "Competência: ${competencia.nome}"
+
+        if (!confirmar("Deseja realmente excluir?")) {
+            println "Operação cancelada."
+            return
+        }
+
+        boolean excluida = bancoDeDados.excluirCompetencia(id)
+
+        println excluida ?
+                "Competência excluída com sucesso." :
+                "Não foi possível excluir a competência."
+    }
+
+    // MÉTODOS AUXILIARES
+
+    private String lerTexto(String mensagem) {
+        print mensagem
+        return scanner.nextLine().trim()
+    }
+
+    private String lerTextoAtualizavel(String campo, Object valorAtual) {
+        print "${campo} [${valorAtual}]: "
+        String valor = scanner.nextLine().trim()
+
+        return valor ? valor : valorAtual?.toString()
+    }
+
+    private Integer lerInteiro(String mensagem) {
+        while (true) {
+            String valor = lerTexto(mensagem)
+
+            try {
+                return Integer.parseInt(valor)
+            } catch (NumberFormatException ignored) {
+                println "Digite um número inteiro válido."
+            }
+        }
+    }
+
+    private Long lerLong(String mensagem) {
+        while (true) {
+            String valor = lerTexto(mensagem)
+
+            try {
+                return Long.parseLong(valor)
+            } catch (NumberFormatException ignored) {
+                println "Digite um ID numérico válido."
+            }
+        }
+    }
+
+    private Long lerLongAtualizavel(String mensagem, Object valorAtual) {
+        while (true) {
+            String valor = lerTexto("${mensagem} [${valorAtual}]: ")
+
+            if (!valor) {
+                return valorAtual as Long
+            }
+
+            try {
+                return Long.parseLong(valor)
+            } catch (NumberFormatException ignored) {
+                println "Digite um ID numérico válido."
+            }
+        }
+    }
+
+    private Boolean lerBooleano(String mensagem) {
+        while (true) {
+            String valor = lerTexto(mensagem).toUpperCase()
+
+            if (valor == "S") return true
+            if (valor == "N") return false
+
+            println "Digite S para sim ou N para não."
+        }
+    }
+
+    private Boolean lerBooleanoAtualizavel(Boolean valorAtual) {
+        while (true) {
+            String valor = lerTexto(
+                    "A vaga está ativa? (S/N) [${valorAtual ? 'S' : 'N'}]: "
+            ).toUpperCase()
+
+            if (!valor) return valorAtual
+            if (valor == "S") return true
+            if (valor == "N") return false
+
+            println "Digite S, N ou pressione Enter para manter."
+        }
+    }
+
+    private List<String> lerCompetencias() {
+        println "Digite as competências separadas por vírgula."
+        println "Exemplo: Java, Python, SQL"
+
+        String entrada = lerTexto("Competências: ")
+
+        return converterCompetencias(entrada)
+    }
+
+    private List<String> converterCompetencias(String entrada) {
+        if (!entrada) {
+            return []
+        }
+
+        return entrada.split(",")
+                .collect { it.trim() }
+                .findAll { !it.isEmpty() }
+                .unique { it.toLowerCase() }
+    }
+
+    private List<String> converterCompetenciasExistentes(Object existentes) {
+        if (existentes == null) {
+            return []
+        }
+
+        if (existentes instanceof Collection) {
+            return existentes.collect { it.toString() }
+        }
+
+        return existentes.toString()
+                .replaceAll(/^\[|\]$/, "")
+                .split(",")
+                .collect { it.trim() }
+                .findAll { !it.isEmpty() }
+    }
+
+    private boolean confirmar(String mensagem) {
+        while (true) {
+            String resposta = lerTexto("${mensagem} (S/N): ").toUpperCase()
+
+            if (resposta == "S") return true
+            if (resposta == "N") return false
+
+            println "Digite S para sim ou N para não."
         }
     }
 

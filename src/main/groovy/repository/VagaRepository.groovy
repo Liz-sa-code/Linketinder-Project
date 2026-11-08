@@ -1,7 +1,7 @@
 
 package repository
 
-import database.ConexaoBanco
+import database.ConnectionProvider
 
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -9,8 +9,15 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 
-class VagaRepository {
+class VagaRepository implements VagaRepositoryInterface {
 
+    private final ConnectionProvider connectionProvider
+
+    VagaRepository(ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider
+    }
+
+    @Override
     List<Map> listar() {
         String sql = '''
             SELECT
@@ -45,28 +52,24 @@ class VagaRepository {
             ORDER BY v.id
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.executeQuery().withCloseable { rs ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            ResultSet rs = stmt.executeQuery()
+                    List<Map> vagas = []
 
-            List<Map> vagas = []
+                    while (rs.next()) {
+                        vagas.add(mapearVaga(rs))
+                    }
 
-            while (rs.next()) {
-                vagas.add(mapearVaga(rs))
+                    return vagas
+                }
             }
-
-            rs.close()
-            stmt.close()
-
-            return vagas
-        } finally {
-            conexao.close()
         }
     }
 
-    Map buscarPorId(long id) {
+    @Override
+    Map buscarPorId(Long id) {
         String sql = '''
             SELECT
                 v.id,
@@ -100,32 +103,25 @@ class VagaRepository {
                 e.nome
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            stmt.setLong(1, id)
+                stmt.setLong(1, id)
 
-            ResultSet rs = stmt.executeQuery()
+                stmt.executeQuery().withCloseable { rs ->
 
-            if (!rs.next()) {
-                rs.close()
-                stmt.close()
-                return null
+                    if (!rs.next()) {
+                        return null
+                    }
+
+                    return mapearVaga(rs)
+                }
             }
-
-            Map vaga = mapearVaga(rs)
-
-            rs.close()
-            stmt.close()
-
-            return vaga
-        } finally {
-            conexao.close()
         }
     }
 
-    long criar(Map vaga, List<String> competencias = []) {
+    @Override
+    Long criar(Map vaga, List<String> competencias) {
         String sql = '''
             INSERT INTO vagas (
                 empresa_id,
@@ -138,31 +134,32 @@ class VagaRepository {
             VALUES (?, ?, ?, ?, ?, ?)
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        Connection conexao = connectionProvider.conectar()
 
         try {
             conexao.autoCommit = false
 
-            PreparedStatement stmt = conexao.prepareStatement(
+            Long id
+
+            conexao.prepareStatement(
                     sql,
                     Statement.RETURN_GENERATED_KEYS
-            )
+            ).withCloseable { stmt ->
 
-            preencherDados(stmt, vaga)
-            stmt.executeUpdate()
+                preencherDados(stmt, vaga)
+                stmt.executeUpdate()
 
-            ResultSet chaves = stmt.generatedKeys
+                stmt.generatedKeys.withCloseable { chaves ->
 
-            if (!chaves.next()) {
-                throw new SQLException(
-                        'Não foi possível obter o ID da vaga.'
-                )
+                    if (!chaves.next()) {
+                        throw new SQLException(
+                                'Não foi possível obter o ID da vaga.'
+                        )
+                    }
+
+                    id = chaves.getLong(1)
+                }
             }
-
-            long id = chaves.getLong(1)
-
-            chaves.close()
-            stmt.close()
 
             associarCompetencias(conexao, id, competencias)
 
@@ -173,15 +170,17 @@ class VagaRepository {
         } catch (Exception e) {
             conexao.rollback()
             throw e
+
         } finally {
             conexao.close()
         }
     }
 
+    @Override
     boolean atualizar(
-            long id,
+            Long id,
             Map vaga,
-            List<String> competencias = []
+            List<String> competencias
     ) {
         String sql = '''
             UPDATE vagas
@@ -195,18 +194,20 @@ class VagaRepository {
             WHERE id = ?
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        Connection conexao = connectionProvider.conectar()
 
         try {
             conexao.autoCommit = false
 
-            PreparedStatement stmt = conexao.prepareStatement(sql)
+            int linhasAfetadas
 
-            preencherDados(stmt, vaga)
-            stmt.setLong(7, id)
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-            int linhasAfetadas = stmt.executeUpdate()
-            stmt.close()
+                preencherDados(stmt, vaga)
+                stmt.setLong(7, id)
+
+                linhasAfetadas = stmt.executeUpdate()
+            }
 
             if (linhasAfetadas == 0) {
                 conexao.rollback()
@@ -223,37 +224,32 @@ class VagaRepository {
         } catch (Exception e) {
             conexao.rollback()
             throw e
+
         } finally {
             conexao.close()
         }
     }
 
-    boolean excluir(long id) {
+    @Override
+    boolean excluir(Long id) {
         String sql = '''
             DELETE FROM vagas
             WHERE id = ?
         '''
 
-        Connection conexao = ConexaoBanco.conectar()
+        connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
 
-        try {
-            PreparedStatement stmt = conexao.prepareStatement(sql)
-            stmt.setLong(1, id)
+                stmt.setLong(1, id)
 
-            int linhasAfetadas = stmt.executeUpdate()
-
-            stmt.close()
-
-            return linhasAfetadas > 0
-        } finally {
-            conexao.close()
+                return stmt.executeUpdate() > 0
+            }
         }
     }
 
-
     private void associarCompetencias(
             Connection conexao,
-            long vagaId,
+            Long vagaId,
             List<String> competencias
     ) {
         if (!competencias) {
@@ -271,48 +267,51 @@ class VagaRepository {
             ON CONFLICT DO NOTHING
         '''
 
-        PreparedStatement stmt = conexao.prepareStatement(sql)
+        conexao.prepareStatement(sql).withCloseable { stmt ->
 
-        competencias.each { String competencia ->
-            stmt.setLong(1, vagaId)
-            stmt.setString(2, competencia)
-            stmt.addBatch()
+            competencias.each { String competencia ->
+                stmt.setLong(1, vagaId)
+                stmt.setString(2, competencia)
+                stmt.addBatch()
+            }
+
+            stmt.executeBatch()
         }
-
-        stmt.executeBatch()
-        stmt.close()
     }
 
     private void removerCompetencias(
             Connection conexao,
-            long vagaId
+            Long vagaId
     ) {
         String sql = '''
             DELETE FROM vaga_competencia
             WHERE vaga_id = ?
         '''
 
-        PreparedStatement stmt = conexao.prepareStatement(sql)
-        stmt.setLong(1, vagaId)
-
-        stmt.executeUpdate()
-        stmt.close()
+        conexao.prepareStatement(sql).withCloseable { stmt ->
+            stmt.setLong(1, vagaId)
+            stmt.executeUpdate()
+        }
     }
 
-    /**
-     * Preenche os parâmetros do INSERT e UPDATE.
-     */
     private void preencherDados(
             PreparedStatement stmt,
             Map vaga
     ) {
-        stmt.setLong(1, (vaga.empresa_id ?: vaga.empresaId) as Long)
+        stmt.setLong(
+                1,
+                (vaga.empresa_id ?: vaga.empresaId) as Long
+        )
+
         stmt.setString(2, vaga.nome)
         stmt.setString(3, vaga.descricao)
         stmt.setString(4, vaga.cidade)
         stmt.setString(5, vaga.estado)
 
-        boolean ativa = vaga.ativa == null ? true : vaga.ativa as boolean
+        boolean ativa = vaga.ativa == null
+                ? true
+                : vaga.ativa as boolean
+
         stmt.setBoolean(6, ativa)
     }
 

@@ -9,7 +9,7 @@ CREATE TABLE candidatos (
                             pais VARCHAR(100) NOT NULL,
                             cep VARCHAR(15) NOT NULL,
                             descricao TEXT,
-                            senha_hash TEXT NOT NULL
+
 );
 
 CREATE TABLE empresas (
@@ -20,7 +20,7 @@ CREATE TABLE empresas (
                           descricao TEXT,
                           pais VARCHAR(100) NOT NULL,
                           cep VARCHAR(15) NOT NULL,
-                          senha_hash TEXT NOT NULL
+                            
 );
 
 CREATE TABLE competencias (

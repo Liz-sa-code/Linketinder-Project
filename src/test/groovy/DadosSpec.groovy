@@ -1,3 +1,4 @@
+
 import spock.lang.Specification
 
 class DadosSpec extends Specification {
@@ -13,17 +14,20 @@ class DadosSpec extends Specification {
     }
 
     def "deve inserir um novo candidato na lista"() {
-
         given:
         def candidato = new Candidato(
                 "João Pereira",
                 "joao.pereira@email.com",
                 "321.654.987-00",
-                27,
                 "MG",
                 "30000-000",
                 "Analista de sistemas",
-                ["Java", "SQL", "Git"]
+                27,
+                [
+                        new Competencia("Java"),
+                        new Competencia("SQL"),
+                        new Competencia("Git")
+                ]
         )
 
         when:
@@ -35,17 +39,20 @@ class DadosSpec extends Specification {
     }
 
     def "deve inserir uma nova empresa na lista"() {
-
         given:
         def empresa = new Empresa(
                 "CodeSolutions",
                 "contato@codesolutions.com",
                 "76.543.210/0001-98",
-                "Brasil",
                 "PR",
                 "80000-000",
                 "Empresa especializada em soluções tecnológicas",
-                ["Java", "Groovy", "Spring"]
+                "Brasil",
+                [
+                        new Competencia("Java"),
+                        new Competencia("Groovy"),
+                        new Competencia("Spring")
+                ]
         )
 
         when:
@@ -57,28 +64,35 @@ class DadosSpec extends Specification {
     }
 
     def "deve permitir inserir mais de um candidato"() {
-
         given:
         def candidato1 = new Candidato(
                 "Mariana Costa",
                 "mariana.costa@email.com",
                 "456.789.123-00",
-                23,
                 "BA",
                 "40000-000",
                 "Desenvolvedora web",
-                ["JavaScript", "HTML", "CSS"]
+                23,
+                [
+                        new Competencia("JavaScript"),
+                        new Competencia("HTML"),
+                        new Competencia("CSS")
+                ]
         )
 
         def candidato2 = new Candidato(
                 "Rafael Almeida",
                 "rafael.almeida@email.com",
                 "654.321.987-00",
-                29,
                 "PE",
                 "50000-000",
                 "Engenheiro de software",
-                ["Java", "Spring", "Docker"]
+                29,
+                [
+                        new Competencia("Java"),
+                        new Competencia("Spring"),
+                        new Competencia("Docker")
+                ]
         )
 
         when:
@@ -92,7 +106,6 @@ class DadosSpec extends Specification {
     }
 
     def "deve permitir inserir mais de uma empresa"() {
-
         given:
         def empresa1 = new Empresa(
                 "DevMaster",
@@ -102,7 +115,10 @@ class DadosSpec extends Specification {
                 "SC",
                 "88000-000",
                 "Empresa de desenvolvimento de software",
-                ["Java", "Python"]
+                [
+                        new Competencia("Java"),
+                        new Competencia("Python")
+                ]
         )
 
         def empresa2 = new Empresa(
@@ -113,7 +129,10 @@ class DadosSpec extends Specification {
                 "RS",
                 "90000-000",
                 "Empresa de tecnologia e inovação",
-                ["Groovy", "JavaScript"]
+                [
+                        new Competencia("Groovy"),
+                        new Competencia("JavaScript")
+                ]
         )
 
         when:
@@ -126,4 +145,3 @@ class DadosSpec extends Specification {
         Dados.empresas[1] == empresa2
     }
 }
-
