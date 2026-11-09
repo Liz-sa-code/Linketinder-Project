@@ -4,8 +4,9 @@
  * Projeto: Linketinder
  */
 
-
 import view.Menu
+import api.ApiServer
+
 import database.ConnectionFactory
 import database.ConnectionProvider
 
@@ -27,19 +28,16 @@ import controller.CompetenciaController
 class Main {
 
     static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in)
 
         try {
-            iniciarAplicacao(scanner)
+            iniciarAplicacao(args)
         } catch (Exception e) {
             println "Erro ao iniciar o Linketinder: ${e.message}"
             e.printStackTrace()
-        } finally {
-            scanner.close()
         }
     }
 
-    private static void iniciarAplicacao(Scanner scanner) {
+    private static void iniciarAplicacao(String[] args) {
 
         ConnectionFactory fabrica = ConnectionFactory.getInstancia()
         ConnectionProvider conexaoBanco = fabrica.criar('postgresql')
@@ -83,15 +81,42 @@ class Main {
         CompetenciaController competenciaController =
                 new CompetenciaController(competenciaService)
 
-        // VIEW
-        Menu menu = new Menu(
-                scanner,
-                candidatoController,
-                empresaController,
-                vagaController,
-                competenciaController
-        )
+        // MODO API REST
+        if (args.length > 0 && args[0].equalsIgnoreCase('api')) {
 
-        menu.executar()
+            ApiServer apiServer = new ApiServer(
+                    candidatoController,
+                    empresaController,
+                    vagaController
+            )
+
+            apiServer.iniciar()
+
+            Runtime.runtime.addShutdownHook(
+                    new Thread({
+                        apiServer.parar()
+                    } as Runnable)
+            )
+
+            return
+        }
+
+        // MODO MENU
+        Scanner scanner = new Scanner(System.in)
+
+        try {
+            Menu menu = new Menu(
+                    scanner,
+                    candidatoController,
+                    empresaController,
+                    vagaController,
+                    competenciaController
+            )
+
+            menu.executar()
+
+        } finally {
+            scanner.close()
+        }
     }
 }
