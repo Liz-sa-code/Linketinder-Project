@@ -64,6 +64,18 @@ Os dados incluem nome, CNPJ, e-mail, descrição, país, CEP e senha armazenada 
 - Exclusão de vagas.
 - Associação de competências exigidas.
 
+### Recrutador e match anônimo
+
+- Cadastro de Recrutadores vinculados a uma empresa e autenticação por senha
+  armazenada em hash.
+- Permissões de análise concedidas por empresa para cada vaga.
+- Consulta de candidatos que demonstraram interesse em alguma vaga da empresa,
+  com dados profissionais anônimos.
+- Registro de interesses de candidato e Recrutador e consulta de matches
+  associados ao Recrutador e à vaga.
+- O anonimato é permanente: nome e demais dados de identidade não são
+  revelados antes nem depois do match.
+
 ## Banco de dados
 
 O sistema utiliza **PostgreSQL**, com acesso realizado diretamente por JDBC, sem utilizar JPA ou Hibernate.
@@ -194,21 +206,28 @@ Configure as variáveis de ambiente `DB_URL`, `DB_USER` e `DB_PASSWORD` com os d
 
 ### 5. Executar a aplicação
 
-A aplicação possui uma interface de interação pelo terminal. A execução deve ser realizada conforme a configuração de execução do projeto Groovy.
+A aplicação possui uma interface de interação pelo terminal e uma API REST.
+Para iniciar a API, com PostgreSQL configurado, execute:
+
+```bash
+./gradlew run --args=api
+```
+
+Durante o desenvolvimento, inicie o frontend em outro terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+O Vite encaminha `/api` para o servidor local na porta 8080.
 
 ## Frontend
 
 O frontend passou por uma reorganização para utilizar TypeScript com Vite, mantendo a implementação principal em TypeScript sem depender da estrutura React do template inicial.
 
-As principais alterações foram:
+Os fluxos de Recrutador, permissões, interesses e matches usam a API. Os dados
+de perfis anônimos não são armazenados em `localStorage`.
 
-- Organização das interfaces de dados em `type.ts`.
-- Centralização das operações de cadastro, listagem e exclusão em `data.ts`.
-- Implementação da navegação entre as telas em `main.ts`.
-- Separação da estilização em `style.css`.
-- Criação de telas para candidatos e empresas.
-- Implementação de formulários para cadastro de candidatos, empresas e vagas.
-- Inclusão de visualização de competências e formação dos candidatos.
-- Implementação de gráfico com Chart.js para apresentar a distribuição de competências.
-
-Atualmente, os dados utilizados pelo frontend são armazenados no `localStorage` do navegador. Essa implementação permite testar as funcionalidades da interface, mas não representa uma integração definitiva com o banco PostgreSQL.
+O build de produção do frontend pode ser validado com `npm run build` no
+diretório `frontend/`.

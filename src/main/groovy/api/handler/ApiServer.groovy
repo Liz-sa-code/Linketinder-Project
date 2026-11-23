@@ -5,13 +5,17 @@ import com.sun.net.httpserver.HttpServer
 
 import controller.CandidatoController
 import controller.EmpresaController
+import controller.RecrutadorController
 import controller.VagaController
 
 import api.handler.CandidatoHandler
 import api.handler.EmpresaHandler
 import api.handler.VagaHandler
+import api.handler.RecrutamentoApiHandler
+import service.AuthService
 
 import java.net.InetSocketAddress
+import java.net.InetAddress
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -20,6 +24,8 @@ class ApiServer {
     private final CandidatoController candidatoController
     private final EmpresaController empresaController
     private final VagaController vagaController
+    private final RecrutadorController recrutadorController
+    private final AuthService authService
 
     private HttpServer servidor
     private ExecutorService executor
@@ -27,11 +33,16 @@ class ApiServer {
     ApiServer(
             CandidatoController candidatoController,
             EmpresaController empresaController,
-            VagaController vagaController
+            VagaController vagaController,
+            RecrutadorController recrutadorController,
+            AuthService authService
     ) {
         this.candidatoController = Objects.requireNonNull(candidatoController)
         this.empresaController = Objects.requireNonNull(empresaController)
         this.vagaController = Objects.requireNonNull(vagaController)
+        this.recrutadorController =
+                Objects.requireNonNull(recrutadorController)
+        this.authService = Objects.requireNonNull(authService)
     }
 
     void iniciar() {
@@ -43,7 +54,7 @@ class ApiServer {
         }
 
         servidor = HttpServer.create(
-                new InetSocketAddress(8080),
+                new InetSocketAddress(InetAddress.getLoopbackAddress(), 8080),
                 0
         )
 
@@ -62,7 +73,18 @@ class ApiServer {
 
         servidor.createContext(
                 '/vagas',
-                new VagaHandler(vagaController)
+                new VagaHandler(vagaController, authService)
+        )
+
+        servidor.createContext(
+                '/api',
+                new RecrutamentoApiHandler(
+                        authService,
+                        candidatoController,
+                        empresaController,
+                        recrutadorController,
+                        vagaController
+                )
         )
 
         servidor.start()
@@ -76,6 +98,7 @@ class ApiServer {
         println 'POST http://localhost:8080/candidatos'
         println 'POST http://localhost:8080/empresas'
         println 'POST http://localhost:8080/vagas'
+        println 'API da funcionalidade: http://localhost:8080/api'
     }
 
     void parar() {

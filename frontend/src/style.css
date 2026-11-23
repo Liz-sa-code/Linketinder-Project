@@ -301,6 +301,11 @@ p {
     font-size: 12px;
 }
 
+.mensagem-erro {
+    color: #bd4f69;
+    font-size: 12px;
+}
+
 .busca {
     display: block;
     max-width: 650px;

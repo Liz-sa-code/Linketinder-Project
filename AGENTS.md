@@ -9,8 +9,8 @@ tarefa e não autoriza alterar funcionalidades por conta própria.
 Linketinder é uma plataforma acadêmica de conexão entre candidatos e empresas,
 baseada em competências e oportunidades de trabalho. O repositório contém um
 backend Groovy com persistência PostgreSQL/JDBC e uma aplicação frontend
-TypeScript. O frontend atualmente mantém seus próprios dados demonstrativos no
-`localStorage`; não está integrado ao backend.
+TypeScript. Os fluxos de Recrutador e match anônimo usam a API; outros dados
+demonstrativos do frontend ainda podem permanecer desacoplados.
 
 ## Stack tecnológica
 
@@ -23,8 +23,10 @@ Recharts como dependências, e o plugin React para Vite. O ponto de entrada
 atual é `frontend/src/main.ts`, escrito em TypeScript sem React; `App.tsx`
 permanece como tela de template.
 - API REST: servidor baseado em `com.sun.net.httpserver.HttpServer`, na porta
-8080, com endpoints POST para cadastro de candidatos, empresas e vagas. Ela
-usa os controllers/services/repositories do backend.
+8080 e limitado a loopback. A API `/api` usa os
+controllers/services/repositories para autenticação, Recrutador, permissões por
+vaga, interesses e matches anônimos; o Vite encaminha `/api` para a porta 8080
+durante o desenvolvimento.
 
 ## Arquitetura e estrutura
 
@@ -42,7 +44,8 @@ O backend está em `src/main/groovy/`:
 O fluxo normal é `view` ou `api/handler` -> `controller` -> `service` ->
 `repository` -> `database`/JDBC. A montagem dessas dependências ocorre em
 `Main.groovy`. O frontend vive em `frontend/`, e hoje funciona separadamente,
-com estado no armazenamento local do navegador.
+integrando os fluxos de Recrutador e match pela API. A API de desenvolvimento é
+encaminhada pelo Vite para `localhost:8080`.
 
 Padrões confirmados no código: Repository, injeção de dependência dos
 provedores nos repositories e Factory/Singleton em `ConnectionFactory`.
@@ -62,23 +65,27 @@ README, mas não está presente no código atual.
   nome, descrição, cidade, estado e ativa; existe associação de competências.
 - **Competência:** entidade com ID e nome. O backend oferece CRUD e associa
   competências existentes a candidatos e vagas.
+- **Recrutador:** possui credenciais com hash de senha e vínculo empresarial;
+  o fluxo `/api` limita vagas por permissões explícitas, consulta perfis
+  profissionais anonimizados e registra interesses/matches.
 
 No banco, as tabelas relacionais `candidato_competencia` e `vaga_competencia`
 representam as associações de competências. A tabela `vagas` referencia
 `empresas`.
 
-Distinga sempre as três superfícies:
+Distinga sempre as superfícies:
 
 - **Backend Groovy:** CRUD de candidato, empresa, vaga e competência,
-  associações de competências e cadastro por API REST. Não há curtidas nem
-  matches implementados no backend.
+  associações de competências, autenticação e fluxo anônimo de Recrutador,
+  interesses e matches na API `/api`.
 - **Somente scripts SQL:** `schema.sql` declara tabelas de formação e de
-  curtidas; `queries.sql` contém exemplos de inserção de curtidas e consulta
-  que combina registros de curtida. Isso não equivale a fluxo ou regra de
-  negócio implementada na aplicação.
+  curtidas legadas; `queries.sql` contém exemplos
+  antigos. O match do fluxo novo é persistido em tabela própria. Não derive
+  regras atuais desses exemplos.
 - **Somente frontend:** telas e dados demonstrativos para candidatos,
-  empresas, vagas, competências/formação e exibição visual de anonimato. O
-  estado fica no `localStorage`, sem integração efetiva com o banco/backend.
+  empresas, vagas e competências que ainda não estejam integradas ao fluxo da
+  API. Cadastro, autenticação, permissões, interesses e matches usam o backend;
+  os perfis anônimos não são armazenados em `localStorage`.
 
 Não derive regras definitivas de match, desfazer curtida, escopo de curtida ou
 revelação de identidade a partir dos scripts de exemplo. Pergunte quando uma
@@ -86,14 +93,14 @@ tarefa depender dessas decisões.
 
 ## PRINCÍPIO DO ANONIMATO — REGRA INVIOLÁVEL
 
-Antes do match, candidatos e empresas não podem ter acesso a dados pessoais
-identificáveis uns dos outros. Recrutadores também devem visualizar somente
-dados profissionais dos candidatos antes do match, como competências, formação
-e experiência. A avaliação deve usar somente informações profissionais
-pertinentes.
+O anonimato aprovado para o fluxo de Recrutador e match é permanente: em nenhum
+momento candidatos e Recrutadores recebem dados pessoais identificáveis um do
+outro. Recrutadores visualizam somente dados profissionais disponíveis do
+candidato, como competências, formação e experiência. A avaliação deve usar
+somente informações profissionais pertinentes.
 
 Nome, CPF, e-mail pessoal, telefone, endereço, data de nascimento e dados
-equivalentes não podem ser expostos antes do match. Nunca enfraqueça nem
+equivalentes não podem ser expostos antes ou depois do match. Nunca enfraqueça nem
 contorne essa proteção. Ocultar campos visualmente no frontend não é suficiente:
 o anonimato deve ser aplicado na camada de acesso aos dados e no backend.
 
@@ -102,21 +109,21 @@ curtidas ou matches:
 
 1. Verifique handlers, endpoints, controllers, services, repositories,
    consultas SQL, payloads, logs e frontend quanto à exposição de identidade.
-2. Não retorne dados identificáveis por API antes de uma autorização definida.
-   Não introduza CPF, data de nascimento, e-mail pessoal ou outros dados
-   sensíveis de candidatos em novas funcionalidades.
-3. Depois do match, libere somente os dados expressamente permitidos por uma
-   regra de negócio aprovada; não deduza quais dados devem ser liberados.
+2. Não retorne dados identificáveis por API. Não introduza CPF, data de
+   nascimento, e-mail pessoal ou outros dados sensíveis de candidatos em novos
+   fluxos anônimos.
+3. Para Recrutador e match, nunca revele identidade depois do match; não crie
+   consentimento ou autorização que suspenda o anonimato permanente.
 4. Inclua verificações de anonimato na implementação, nos testes e no code
    review.
 5. Se uma decisão puder comprometer o anonimato, interrompa e pergunte antes
    de implementar.
 
-O código atual ainda retorna dados identificáveis em consultas Groovy de
-candidatos e os apresenta no menu. O frontend mascara alguns dados na
-apresentação, mas mantém dados identificáveis em seu estado local. Trate isso
-como estado existente a ser considerado com cuidado, nunca como garantia de
-anonimato nem como autorização para ampliar a exposição.
+As consultas gerais de CRUD de candidatos ainda retornam dados identificáveis
+e o menu pode apresentá-los. Não reutilize essas consultas nos endpoints de
+Recrutador ou match; use somente projeções profissionais dedicadas. O frontend
+dos fluxos de Recrutador e match consome essas projeções pela API e não usa
+`localStorage` para os perfis anônimos.
 
 ## Banco de dados
 
@@ -138,11 +145,11 @@ psql -h <host> -U <usuario> -d <banco> -f database/schema.sql
 psql -h <host> -U <usuario> -d <banco> -f database/inserts.sql
 ```
 
-Confirme o esquema e os scripts antes de executá-los: o estado atual tem
-vírgulas finais após colunas nas declarações de `candidatos` e `empresas` em
-`schema.sql`, e `inserts.sql` referencia `senha_hash`, coluna ausente desse
-schema. Há também divergências entre alguns campos do modelo e as tabelas.
-Não corrija nem oculte essas inconsistências sem escopo aprovado.
+O schema inclui colunas `senha_hash` para candidatos e empresas e tabelas de
+Recrutador, permissões, interesses e matches anônimos. Os dados fictícios de
+`inserts.sql` usam valores ilustrativos de hash e não são credenciais de login.
+Valide as alterações de schema e scripts em banco de teste antes de aplicá-las
+em outro ambiente.
 
 ## Como executar e testar
 

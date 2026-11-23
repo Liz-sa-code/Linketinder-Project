@@ -14,16 +14,22 @@ import repository.CandidatoRepository
 import repository.EmpresaRepository
 import repository.VagaRepository
 import repository.CompetenciaRepository
+import repository.RecrutadorRepository
+import repository.MatchRepository
 
 import service.CandidatoService
 import service.EmpresaService
 import service.VagaService
 import service.CompetenciaService
+import service.RecrutadorService
+import service.AuthService
 
 import controller.CandidatoController
 import controller.EmpresaController
 import controller.VagaController
 import controller.CompetenciaController
+import controller.RecrutadorController
+import security.AuthSessionStore
 
 class Main {
 
@@ -55,6 +61,12 @@ class Main {
         CompetenciaRepository competenciaRepository =
                 new CompetenciaRepository(conexaoBanco)
 
+        RecrutadorRepository recrutadorRepository =
+                new RecrutadorRepository(conexaoBanco)
+
+        MatchRepository matchRepository =
+                new MatchRepository(conexaoBanco)
+
         // SERVICES
         CandidatoService candidatoService =
                 new CandidatoService(candidatoRepository)
@@ -67,6 +79,21 @@ class Main {
 
         CompetenciaService competenciaService =
                 new CompetenciaService(competenciaRepository)
+
+        AuthService authService = new AuthService(
+                candidatoRepository,
+                empresaRepository,
+                recrutadorRepository,
+                new AuthSessionStore()
+        )
+
+        RecrutadorService recrutadorService = new RecrutadorService(
+                recrutadorRepository,
+                candidatoRepository,
+                vagaRepository,
+                matchRepository,
+                authService
+        )
 
         // CONTROLLERS
         CandidatoController candidatoController =
@@ -81,13 +108,18 @@ class Main {
         CompetenciaController competenciaController =
                 new CompetenciaController(competenciaService)
 
+        RecrutadorController recrutadorController =
+                new RecrutadorController(recrutadorService)
+
         // MODO API REST
         if (args.length > 0 && args[0].equalsIgnoreCase('api')) {
 
             ApiServer apiServer = new ApiServer(
                     candidatoController,
                     empresaController,
-                    vagaController
+                    vagaController,
+                    recrutadorController,
+                    authService
             )
 
             apiServer.iniciar()

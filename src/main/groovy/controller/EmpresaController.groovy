@@ -23,6 +23,10 @@ class EmpresaController {
         return empresaService.cadastrar(empresa)
     }
 
+    Map buscarCredenciaisPorEmail(String email) {
+        return empresaService.buscarCredenciaisPorEmail(email)
+    }
+
     boolean atualizar(Long id, Map empresa) {
         return empresaService.atualizar(id, empresa)
     }

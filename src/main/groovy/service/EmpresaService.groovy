@@ -2,6 +2,7 @@
 package service
 
 import repository.EmpresaRepositoryInterface
+import security.PasswordHasher
 
 class EmpresaService {
 
@@ -22,7 +23,11 @@ class EmpresaService {
 
     Long cadastrar(Map empresa) {
         validarIdados(empresa)
-        return empresaRepository.criar(empresa)
+        return empresaRepository.criar(prepararDadosParaPersistencia(empresa))
+    }
+
+    Map buscarCredenciaisPorEmail(String email) {
+        return empresaRepository.buscarCredenciaisPorEmail(email)
     }
 
     boolean atualizar(Long id, Map empresa) {
@@ -50,5 +55,24 @@ class EmpresaService {
                     'Os dados da empresa devem ser informados.'
             )
         }
+    }
+
+    private Map prepararDadosParaPersistencia(Map empresa) {
+        Map resultado = new LinkedHashMap(empresa)
+        String senha = resultado.remove('senha')?.toString()
+        resultado.remove('senha_hash')
+
+        if (senha) {
+            if (senha.length() < 8 || senha.length() > 256) {
+                throw new IllegalArgumentException(
+                        'A senha deve ter entre 8 e 256 caracteres.'
+                )
+            }
+            resultado.senha_hash = PasswordHasher.hash(senha)
+        } else {
+            resultado.senha_hash = null
+        }
+
+        return resultado
     }
 }

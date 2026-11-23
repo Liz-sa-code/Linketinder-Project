@@ -152,9 +152,10 @@ class CandidatoRepository implements CandidatoInterfaceRepository {
                 cpf,
                 pais,
                 cep,
-                descricao
+                descricao,
+                senha_hash
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
 
         Connection conexao = connectionProvider.conectar()
@@ -334,6 +335,119 @@ class CandidatoRepository implements CandidatoInterfaceRepository {
         stmt.setString(6, dados.pais)
         stmt.setString(7, dados.cep)
         stmt.setString(8, dados.descricao)
+        stmt.setString(9, dados.senha_hash)
+    }
+
+    @Override
+    Map buscarCredenciaisPorEmail(String email) {
+        String sql = '''
+            SELECT id, senha_hash
+            FROM candidatos
+            WHERE LOWER(email) = LOWER(?)
+              AND senha_hash IS NOT NULL
+        '''
+
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.setString(1, email)
+                stmt.executeQuery().withCloseable { rs ->
+                    if (!rs.next()) {
+                        return null
+                    }
+
+                    return [
+                            id: rs.getLong('id'),
+                            senhaHash: rs.getString('senha_hash')
+                    ]
+                }
+            }
+        }
+    }
+
+    @Override
+    List<Map> listarPerfisAnonimosPorEmpresa(Long empresaId) {
+        String sql = '''
+            SELECT
+                c.id,
+                c.descricao,
+                COALESCE(
+                    ARRAY_AGG(DISTINCT comp.nome ORDER BY comp.nome)
+                        FILTER (WHERE comp.nome IS NOT NULL),
+                    ARRAY[]::VARCHAR[]
+                ) AS competencias,
+                COALESCE(
+                    (
+                        SELECT ARRAY_AGG(
+                            DISTINCT CONCAT_WS(
+                                ' — ',
+                                f.nome,
+                                cf.instituicao,
+                                cf.nivel
+                            )
+                            ORDER BY CONCAT_WS(
+                                ' — ',
+                                f.nome,
+                                cf.instituicao,
+                                cf.nivel
+                            )
+                        )
+                        FROM candidato_formacao cf
+                        INNER JOIN formacoes f ON f.id = cf.formacao_id
+                        WHERE cf.candidato_id = c.id
+                    ),
+                    ARRAY[]::TEXT[]
+                ) AS formacoes
+            FROM candidatos c
+            INNER JOIN curtidas_candidato_vaga cv
+                ON cv.candidato_id = c.id
+            INNER JOIN vagas v
+                ON v.id = cv.vaga_id
+               AND v.empresa_id = ?
+            LEFT JOIN candidato_competencia cc
+                ON cc.candidato_id = c.id
+            LEFT JOIN competencias comp
+                ON comp.id = cc.competencia_id
+            GROUP BY c.id, c.descricao
+            ORDER BY c.id
+        '''
+
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.setLong(1, empresaId)
+                stmt.executeQuery().withCloseable { rs ->
+                    List<Map> perfis = []
+                    while (rs.next()) {
+                        String[] competencias =
+                                rs.getArray('competencias')?.array as String[] ?: []
+                        perfis.add([
+                                candidatoId: rs.getLong('id'),
+                                descricao: rs.getString('descricao'),
+                                competencias: competencias.toList(),
+                                formacoes: (rs.getArray('formacoes')?.array
+                                        as String[] ?: []).toList()
+                        ])
+                    }
+                    return perfis
+                }
+            }
+        }
+    }
+
+    @Override
+    boolean registrarInteresse(Long candidatoId, Long vagaId) {
+        String sql = '''
+            INSERT INTO curtidas_candidato_vaga (candidato_id, vaga_id)
+            VALUES (?, ?)
+            ON CONFLICT (candidato_id, vaga_id) DO NOTHING
+        '''
+
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.setLong(1, candidatoId)
+                stmt.setLong(2, vagaId)
+                stmt.executeUpdate() > 0
+            }
+        }
     }
 
     private Date converterData(def data) {
