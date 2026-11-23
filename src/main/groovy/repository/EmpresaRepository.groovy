@@ -54,6 +54,32 @@ class EmpresaRepository implements EmpresaRepositoryInterface {
     }
 
     @Override
+    Map buscarCredenciaisPorEmail(String email) {
+        String sql = '''
+            SELECT id, senha_hash
+            FROM empresas
+            WHERE LOWER(email) = LOWER(?)
+              AND senha_hash IS NOT NULL
+        '''
+
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.setString(1, email)
+                stmt.executeQuery().withCloseable { rs ->
+                    if (!rs.next()) {
+                        return null
+                    }
+
+                    return [
+                            id: rs.getLong('id'),
+                            senhaHash: rs.getString('senha_hash')
+                    ]
+                }
+            }
+        }
+    }
+
+    @Override
     Map buscarPorId(Long id) {
         String sql = '''
             SELECT
@@ -102,9 +128,10 @@ class EmpresaRepository implements EmpresaRepositoryInterface {
                 email,
                 descricao,
                 pais,
-                cep
+                cep,
+                senha_hash
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         '''
 
         return connectionProvider.conectar().withCloseable { conexao ->
@@ -120,6 +147,7 @@ class EmpresaRepository implements EmpresaRepositoryInterface {
                 stmt.setString(4, empresa.descricao)
                 stmt.setString(5, empresa.pais)
                 stmt.setString(6, empresa.cep)
+                stmt.setString(7, empresa.senha_hash)
 
                 stmt.executeUpdate()
 

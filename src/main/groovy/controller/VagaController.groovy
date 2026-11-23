@@ -15,6 +15,18 @@ class VagaController {
         return vagaService.listar()
     }
 
+    List<Map> listarAtivasAnonimas() {
+        return vagaService.listarAtivasAnonimas()
+    }
+
+    List<Map> listarPorEmpresa(Long empresaId) {
+        return vagaService.listarPorEmpresa(empresaId)
+    }
+
+    List<Map> listarAutorizadas(Long recrutadorId, Long empresaId) {
+        return vagaService.listarAutorizadas(recrutadorId, empresaId)
+    }
+
     Map buscarPorId(Long id) {
         return vagaService.buscarPorId(id)
     }

@@ -15,6 +15,21 @@ class VagaService {
         return vagaRepository.listar()
     }
 
+    List<Map> listarAtivasAnonimas() {
+        return vagaRepository.listarAtivasAnonimas()
+    }
+
+    List<Map> listarPorEmpresa(Long empresaId) {
+        validarId(empresaId)
+        return vagaRepository.listarPorEmpresa(empresaId)
+    }
+
+    List<Map> listarAutorizadas(Long recrutadorId, Long empresaId) {
+        validarId(recrutadorId)
+        validarId(empresaId)
+        return vagaRepository.listarAutorizadas(recrutadorId, empresaId)
+    }
+
     Map buscarPorId(Long id) {
         validarId(id)
         return vagaRepository.buscarPorId(id)

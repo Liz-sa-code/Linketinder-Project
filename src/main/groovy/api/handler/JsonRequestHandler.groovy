@@ -53,7 +53,7 @@ abstract class JsonRequestHandler implements HttpHandler {
                     )
                 }
 
-                resposta = executar(conteudo as Map)
+                resposta = executar(exchange, conteudo as Map)
 
             } catch (JsonException | IllegalArgumentException e) {
 
@@ -68,8 +68,6 @@ abstract class JsonRequestHandler implements HttpHandler {
                 resposta = [
                         erro: 'Erro interno do servidor.'
                 ]
-
-                e.printStackTrace()
             }
 
             responder(exchange, status, resposta)
@@ -80,6 +78,10 @@ abstract class JsonRequestHandler implements HttpHandler {
     }
 
     protected abstract Map executar(Map dados)
+
+    protected Map executar(HttpExchange exchange, Map dados) {
+        return executar(dados)
+    }
 
     private void responder(
             HttpExchange exchange,

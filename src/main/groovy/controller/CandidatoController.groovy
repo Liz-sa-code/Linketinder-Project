@@ -22,6 +22,14 @@ class CandidatoController {
         return candidatoService.cadastrar(dados, competencias)
     }
 
+    List<Map> listarPerfisAnonimosPorEmpresa(Long empresaId) {
+        return candidatoService.listarPerfisAnonimosPorEmpresa(empresaId)
+    }
+
+    boolean registrarInteresse(Long candidatoId, Long vagaId) {
+        return candidatoService.registrarInteresse(candidatoId, vagaId)
+    }
+
     boolean atualizar(Long id, Map dados, List<String> competencias) {
         return candidatoService.atualizar(id, dados, competencias)
     }

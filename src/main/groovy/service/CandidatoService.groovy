@@ -1,6 +1,7 @@
 package service
 
 import repository.CandidatoInterfaceRepository
+import security.PasswordHasher
 
 class CandidatoService {
 
@@ -21,11 +22,27 @@ class CandidatoService {
 
     Long cadastrar(Map dados, List<String> competencias) {
         validarDados(dados)
+        Map dadosPersistencia = prepararDadosParaPersistencia(dados)
 
         return candidatoRepository.criar(
-                dados,
+                dadosPersistencia,
                 competencias ?: []
         )
+    }
+
+    Map buscarCredenciaisPorEmail(String email) {
+        return candidatoRepository.buscarCredenciaisPorEmail(email)
+    }
+
+    List<Map> listarPerfisAnonimosPorEmpresa(Long empresaId) {
+        validarId(empresaId)
+        return candidatoRepository.listarPerfisAnonimosPorEmpresa(empresaId)
+    }
+
+    boolean registrarInteresse(Long candidatoId, Long vagaId) {
+        validarId(candidatoId)
+        validarId(vagaId)
+        return candidatoRepository.registrarInteresse(candidatoId, vagaId)
     }
 
     boolean atualizar(Long id, Map dados, List<String> competencias) {
@@ -56,6 +73,29 @@ class CandidatoService {
         if (dados == null || dados.isEmpty()) {
             throw new IllegalArgumentException(
                     'Os dados do candidato devem ser informados.'
+            )
+        }
+    }
+
+    private Map prepararDadosParaPersistencia(Map dados) {
+        Map resultado = new LinkedHashMap(dados)
+        String senha = resultado.remove('senha')?.toString()
+        resultado.remove('senha_hash')
+
+        if (senha) {
+            validarSenha(senha)
+            resultado.senha_hash = PasswordHasher.hash(senha)
+        } else {
+            resultado.senha_hash = null
+        }
+
+        return resultado
+    }
+
+    private void validarSenha(String senha) {
+        if (senha.length() < 8 || senha.length() > 256) {
+            throw new IllegalArgumentException(
+                    'A senha deve ter entre 8 e 256 caracteres.'
             )
         }
     }

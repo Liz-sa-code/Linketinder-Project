@@ -5,6 +5,8 @@ interface EmpresaRepositoryInterface {
 
     Long criar(Map empresa)
 
+    Map buscarCredenciaisPorEmail(String email)
+
     List<Map> listar()
 
     Map buscarPorId(Long id)

@@ -121,6 +121,130 @@ class VagaRepository implements VagaRepositoryInterface {
     }
 
     @Override
+    List<Map> listarAtivasAnonimas() {
+        String sql = '''
+            SELECT
+                v.id,
+                v.nome,
+                v.descricao,
+                v.cidade,
+                v.estado,
+                COALESCE(
+                    ARRAY_AGG(DISTINCT c.nome ORDER BY c.nome)
+                        FILTER (WHERE c.nome IS NOT NULL),
+                    ARRAY[]::VARCHAR[]
+                ) AS competencias
+            FROM vagas v
+            LEFT JOIN vaga_competencia vc ON vc.vaga_id = v.id
+            LEFT JOIN competencias c ON c.id = vc.competencia_id
+            WHERE v.ativa = TRUE
+            GROUP BY v.id
+            ORDER BY v.id
+        '''
+
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.executeQuery().withCloseable { rs ->
+                    List<Map> vagas = []
+                    while (rs.next()) {
+                        vagas.add([
+                                id: rs.getLong('id'),
+                                nome: rs.getString('nome'),
+                                descricao: rs.getString('descricao'),
+                                cidade: rs.getString('cidade'),
+                                estado: rs.getString('estado'),
+                                competencias: (rs.getArray('competencias')?.array
+                                        as String[] ?: []).toList()
+                        ])
+                    }
+                    return vagas
+                }
+            }
+        }
+    }
+
+    @Override
+    List<Map> listarPorEmpresa(Long empresaId) {
+        String sql = '''
+            SELECT id, nome, descricao, cidade, estado, ativa
+            FROM vagas
+            WHERE empresa_id = ?
+            ORDER BY id
+        '''
+
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.setLong(1, empresaId)
+                stmt.executeQuery().withCloseable { rs ->
+                    List<Map> vagas = []
+                    while (rs.next()) {
+                        vagas.add([
+                                id: rs.getLong('id'),
+                                nome: rs.getString('nome'),
+                                descricao: rs.getString('descricao'),
+                                cidade: rs.getString('cidade'),
+                                estado: rs.getString('estado'),
+                                ativa: rs.getBoolean('ativa')
+                        ])
+                    }
+                    return vagas
+                }
+            }
+        }
+    }
+
+    @Override
+    List<Map> listarAutorizadas(Long recrutadorId, Long empresaId) {
+        String sql = '''
+            SELECT
+                v.id,
+                v.nome,
+                v.descricao,
+                v.cidade,
+                v.estado,
+                v.ativa,
+                COALESCE(
+                    ARRAY_AGG(DISTINCT c.nome ORDER BY c.nome)
+                        FILTER (WHERE c.nome IS NOT NULL),
+                    ARRAY[]::VARCHAR[]
+                ) AS competencias
+            FROM permissoes_recrutador_vaga p
+            INNER JOIN vagas v
+                ON v.id = p.vaga_id
+               AND v.empresa_id = p.empresa_id
+            LEFT JOIN vaga_competencia vc ON vc.vaga_id = v.id
+            LEFT JOIN competencias c ON c.id = vc.competencia_id
+            WHERE p.recrutador_id = ?
+              AND p.empresa_id = ?
+            GROUP BY v.id
+            ORDER BY v.id
+        '''
+
+        return connectionProvider.conectar().withCloseable { conexao ->
+            conexao.prepareStatement(sql).withCloseable { stmt ->
+                stmt.setLong(1, recrutadorId)
+                stmt.setLong(2, empresaId)
+                stmt.executeQuery().withCloseable { rs ->
+                    List<Map> vagas = []
+                    while (rs.next()) {
+                        vagas.add([
+                                id: rs.getLong('id'),
+                                nome: rs.getString('nome'),
+                                descricao: rs.getString('descricao'),
+                                cidade: rs.getString('cidade'),
+                                estado: rs.getString('estado'),
+                                ativa: rs.getBoolean('ativa'),
+                                competencias: (rs.getArray('competencias')?.array
+                                        as String[] ?: []).toList()
+                        ])
+                    }
+                    return vagas
+                }
+            }
+        }
+    }
+
+    @Override
     Long criar(Map vaga, List<String> competencias) {
         String sql = '''
             INSERT INTO vagas (

@@ -1,35 +1,37 @@
-export interface Candidato {
-    id: number;
-    nome: string;
-    sobrenome: string;
-    data_nascimento: string;
-    email: string;
-    cpf: string;
-    pais: string;
-    cep: string;
+export interface PerfilCandidatoAnonimo {
+    referencia: string;
     descricao: string;
-    formacao: string;
     competencias: string[];
+    formacoes: string[];
 }
 
-export interface Empresa {
+export interface MatchRecrutador {
     id: number;
-    nome: string;
-    cnpj: string;
-    email: string;
-    descricao: string;
-    pais: string;
-    cep: string;
+    vaga: VagaAnonima;
+    candidato: Omit<PerfilCandidatoAnonimo, "referencia">;
 }
 
-export interface Vaga {
+export interface MatchCandidato {
     id: number;
-    empresa_id: number;
+    vaga: VagaAnonima;
+}
+
+export interface VagaAnonima {
+    id: number;
     nome: string;
     descricao: string;
     cidade: string;
     estado: string;
+    competencias?: string[];
+}
+
+export interface VagaEmpresa extends Omit<VagaAnonima, "competencias"> {
     ativa: boolean;
-    empresa?: string;
-    competencias: string[];
+}
+
+export interface RecrutadorEmpresa {
+    id: number;
+    nome: string;
+    areaRecrutamento: string;
+    email: string;
 }
