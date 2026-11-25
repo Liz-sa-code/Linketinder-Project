@@ -34,13 +34,7 @@ import security.AuthSessionStore
 class Main {
 
     static void main(String[] args) {
-
-        try {
-            iniciarAplicacao(args)
-        } catch (Exception e) {
-            println "Erro ao iniciar o Linketinder: ${e.message}"
-            e.printStackTrace()
-        }
+        iniciarAplicacao(args)
     }
 
     private static void iniciarAplicacao(String[] args) {
@@ -113,6 +107,8 @@ class Main {
 
         // MODO API REST
         if (args.length > 0 && args[0].equalsIgnoreCase('api')) {
+
+            conexaoBanco.conectar().withCloseable { }
 
             ApiServer apiServer = new ApiServer(
                     candidatoController,

@@ -2,6 +2,7 @@
 package api.handler
 
 import controller.CandidatoController
+import security.PasswordPolicy
 
 class CandidatoHandler extends JsonRequestHandler {
 
@@ -22,6 +23,7 @@ class CandidatoHandler extends JsonRequestHandler {
             )
         }
 
+        PasswordPolicy.exigirSenha((dados.dados as Map).senha)
         def competencias = dados.competencias ?: []
 
         if (!(competencias instanceof List)) {

@@ -64,6 +64,10 @@ abstract class JsonRequestHandler implements HttpHandler {
 
             } catch (Exception e) {
 
+                System.err.println(
+                        "Falha inesperada na API: ${exchange.requestMethod} ${exchange.requestURI.path}"
+                )
+                e.printStackTrace(System.err)
                 status = 500
                 resposta = [
                         erro: 'Erro interno do servidor.'

@@ -28,6 +28,12 @@ Changelog.
 - Frontend deixa de usar dados demonstrativos em `localStorage` nos fluxos
   implementados.
 - API limitada ao loopback e respostas com `Cache-Control: no-store`.
+- API registra stack traces de falhas inesperadas no servidor sem expor
+  detalhes internos na resposta HTTP.
+- O servidor valida a conexão PostgreSQL antes de anunciar a API como iniciada.
+- Os contratos TypeScript dos matches e do login refletem os payloads reais.
+- Migração idempotente para compatibilizar bancos existentes com autenticação
+  e tabelas de Recrutador.
 
 ### Corrigido
 
@@ -36,5 +42,8 @@ Changelog.
 - Escopo da consulta de candidatos para incluir quem demonstrou interesse em
   qualquer vaga da empresa do Recrutador, sem dispensar permissão específica
   para analisar uma vaga ou registrar interesse nela.
+- Rotas legadas de cadastro exigem senha e erros inesperados também são
+  registrados no log do servidor.
+- Respostas de match incluem o ID da vaga, conforme o contrato do frontend.
 
 ### Removido

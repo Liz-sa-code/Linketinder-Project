@@ -23,9 +23,7 @@ interface Sessao {
     tipo: TipoConta;
 }
 
-interface LoginResponse extends Sessao {
-    id: number;
-}
+type LoginResponse = Sessao;
 
 interface IdResponse {
     id: number;

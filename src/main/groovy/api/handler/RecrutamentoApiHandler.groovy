@@ -10,6 +10,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.json.JsonException
 import security.AuthPrincipal
+import security.PasswordPolicy
 import service.AuthService
 
 import java.nio.charset.StandardCharsets
@@ -83,6 +84,10 @@ class RecrutamentoApiHandler implements HttpHandler {
         } catch (SecurityException e) {
             responder(exchange, 401, [erro: 'Autenticação ou autorização inválida.'])
         } catch (Exception e) {
+            System.err.println(
+                    "Falha inesperada na API: ${exchange.requestMethod} ${exchange.requestURI.path}"
+            )
+            e.printStackTrace(System.err)
             if (sqlState(e) == '23505') {
                 responder(exchange, 409, [erro: 'Registro já existente.'])
             } else {
@@ -269,12 +274,7 @@ class RecrutamentoApiHandler implements HttpHandler {
     }
 
     private static void exigirSenha(Map dados) {
-        String senha = texto(dados.senha, 'A senha')
-        if (senha.length() < 8 || senha.length() > 256) {
-            throw new IllegalArgumentException(
-                    'A senha deve ter entre 8 e 256 caracteres.'
-            )
-        }
+        PasswordPolicy.exigirSenha(dados.senha)
     }
 
     private static Map objeto(def value, String campo) {
