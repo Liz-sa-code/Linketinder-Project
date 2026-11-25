@@ -14,6 +14,7 @@ class MatchRepository {
         String sql = '''
             SELECT
                 m.id AS match_id,
+                v.id AS vaga_id,
                 v.nome AS vaga_nome,
                 v.descricao AS vaga_descricao,
                 v.cidade,
@@ -66,6 +67,7 @@ class MatchRepository {
                         matches.add([
                                 id: rs.getLong('match_id'),
                                 vaga: [
+                                        id: rs.getLong('vaga_id'),
                                         nome: rs.getString('vaga_nome'),
                                         descricao: rs.getString('vaga_descricao'),
                                         cidade: rs.getString('cidade'),
@@ -90,6 +92,7 @@ class MatchRepository {
         String sql = '''
             SELECT
                 m.id AS match_id,
+                v.id AS vaga_id,
                 v.nome AS vaga_nome,
                 v.descricao AS vaga_descricao,
                 v.cidade,
@@ -109,6 +112,7 @@ class MatchRepository {
                         matches.add([
                                 id: rs.getLong('match_id'),
                                 vaga: [
+                                        id: rs.getLong('vaga_id'),
                                         nome: rs.getString('vaga_nome'),
                                         descricao: rs.getString('vaga_descricao'),
                                         cidade: rs.getString('cidade'),

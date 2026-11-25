@@ -2,6 +2,7 @@
 package api.handler
 
 import controller.EmpresaController
+import security.PasswordPolicy
 
 class EmpresaHandler extends JsonRequestHandler {
 
@@ -22,6 +23,7 @@ class EmpresaHandler extends JsonRequestHandler {
             )
         }
 
+        PasswordPolicy.exigirSenha(dados.senha)
         Long id = empresaController.cadastrar(dados)
 
         if (id == null || id <= 0) {

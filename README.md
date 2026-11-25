@@ -90,6 +90,15 @@ As configurações de conexão são realizadas por meio das variáveis de ambien
 - `DB_USER`
 - `DB_PASSWORD`
 
+Para bancos existentes criados antes das últimas alterações de autenticação e
+Recrutador, aplique as migrações em `database/migrations/` antes de iniciar a
+API. Exemplo:
+
+```bash
+psql -h <host> -U <usuario> -d <banco> \
+  -f database/migrations/001_auth_schema_compat.sql
+```
+
 ## Padrões de Projeto (Design Patterns)
 
 Nesta etapa do projeto, foi realizada uma refatoração com o objetivo de aplicar padrões de projeto, melhorar a organização do código e reduzir o acoplamento entre as classes.
@@ -173,6 +182,9 @@ Para executar a suíte de testes, utilize:
 ./gradlew clean test
 ```
 
+Um teste de integração de schema também é executado quando `DB_URL`, `DB_USER`
+e `DB_PASSWORD` estão configuradas; sem essas variáveis, ele é ignorado.
+
 A execução deve apresentar `BUILD SUCCESSFUL` quando todos os testes forem concluídos com sucesso.
 
 ## Como executar o projeto
@@ -212,6 +224,9 @@ Para iniciar a API, com PostgreSQL configurado, execute:
 ```bash
 ./gradlew run --args=api
 ```
+
+A API valida a conexão com PostgreSQL antes de abrir a porta 8080 e encerra
+com erro se as variáveis de conexão estiverem ausentes ou inválidas.
 
 Durante o desenvolvimento, inicie o frontend em outro terminal:
 
